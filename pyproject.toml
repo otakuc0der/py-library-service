@@ -4,4 +4,24 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "celery[redis]>=5.6.3",
+    "django>=6.1.1",
+    "django-filter>=26.1",
+    "djangorestframework>=3.18.1",
+    "drf-spectacular>=0.30.0",
+    "flower>=2.1.0",
+    "pillow>=12.3.0",
+    "psycopg[binary]>=3.3.5",
+    "python-decouple>=3.8",
+]
+
+[dependency-groups]
+dev = [
+    "black[d]>=26.5.1",
+    "django-debug-toolbar>=8.0.0",
+    "django-stubs>=6.1.1",
+    "flake8>=7.3.0",
+    "pytest>=9.1.1",
+    "pytest-django>=4.14.0",
+]
