@@ -139,7 +139,27 @@ REST_FRAMEWORK = {
 SPECTACULAR_SETTINGS = {
     "TITLE": "Library Service API",
     "DESCRIPTION": (
-        "API for managing books, borrowings, users and payments."
+        "REST API for managing a library service.\n\n"
+        "The API allows users to browse available books, create and "
+        "manage borrowings, return borrowed books and view related "
+        "payments.\n\n"
+        "Administrators can manage the book inventory and access all "
+        "borrowings and payments. Regular users can work only with "
+        "their own borrowings and payments.\n\n"
+        "The service also supports JWT authentication, Stripe payments "
+        "and Telegram notifications."
     ),
     "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "defaultModelRendering": "model",
+        "defaultModelsExpandDepth": 2,
+        "defaultModelExpandDepth": 2,
+        "docExpansion": "list",
+        "filter": True,
+        "persistAuthorization": True,
+        "displayRequestDuration": True,
+    },
 }
