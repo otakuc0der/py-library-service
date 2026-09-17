@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 
 from decouple import config
@@ -35,6 +36,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "django_filters",
     "books",
+    "users",
 ]
 
 MIDDLEWARE = [
@@ -126,6 +128,7 @@ MEDIA_ROOT = Path(
     )
 )
 
+AUTH_USER_MODEL = "users.User"
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": (
@@ -134,22 +137,30 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
     ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZE",
+    "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "Library Service API",
     "DESCRIPTION": (
         "REST API for managing a library service.\n\n"
-        "The API allows users to browse available books, create and "
-        "manage borrowings, return borrowed books and view related "
-        "payments.\n\n"
-        "Administrators can manage the book inventory and access all "
-        "borrowings and payments. Regular users can work only with "
-        "their own borrowings and payments.\n\n"
-        "The service also supports JWT authentication, Stripe payments "
-        "and Telegram notifications."
+        "The API currently provides book inventory management, "
+        "user registration and JWT authentication.\n\n"
+        "Authenticated users can retrieve and update their own "
+        "account data.\n\n"
+        "Protected endpoints accept JWT access tokens through the "
+        "custom `Authorize` HTTP header."
     ),
-    "VERSION": "1.0.0",
+    "VERSION": "0.2.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "SWAGGER_UI_SETTINGS": {

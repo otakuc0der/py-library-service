@@ -12,8 +12,15 @@ urlpatterns = [
     path(
         "api/books/",
         include(
-            ("books.urls", "books"),
+            "books.urls",
             namespace="books",
+        ),
+    ),
+    path(
+        "api/users/",
+        include(
+            "users.urls",
+            namespace="users",
         ),
     ),
     path(
