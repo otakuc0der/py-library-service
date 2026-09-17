@@ -1,4 +1,3 @@
-import uuid
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -19,6 +18,7 @@ class BookModelTests(TestCase):
             "daily_fee": Decimal("2.30"),
         }
         book_data.update(changes)
+
         return book_data
 
     def test_create_book_with_correct_data(self) -> None:
@@ -26,15 +26,24 @@ class BookModelTests(TestCase):
 
         book = Book.objects.create(**book_data)
 
-        self.assertIsInstance(book.id, uuid.UUID)
+        self.assertIsInstance(book.id, int)
+        self.assertGreater(book.id, 0)
         self.assertEqual(book.title, book_data["title"])
         self.assertEqual(book.author, book_data["author"])
         self.assertEqual(book.cover, book_data["cover"])
-        self.assertEqual(book.inventory, book_data["inventory"])
-        self.assertEqual(book.daily_fee, book_data["daily_fee"])
+        self.assertEqual(
+            book.inventory,
+            book_data["inventory"],
+        )
+        self.assertEqual(
+            book.daily_fee,
+            book_data["daily_fee"],
+        )
 
     def test_str_returns_title_and_author(self) -> None:
-        book = Book.objects.create(**self.get_book_data())
+        book = Book.objects.create(
+            **self.get_book_data()
+        )
 
         self.assertEqual(
             str(book),
@@ -55,9 +64,14 @@ class BookModelTests(TestCase):
             )
         )
 
-        self.assertEqual(book.daily_fee, Decimal("0.00"))
+        self.assertEqual(
+            book.daily_fee,
+            Decimal("0.00"),
+        )
 
-    def test_negative_daily_fee_fails_validation(self) -> None:
+    def test_negative_daily_fee_fails_validation(
+        self,
+    ) -> None:
         book = Book(
             **self.get_book_data(
                 daily_fee=Decimal("-1.00"),
@@ -72,7 +86,9 @@ class BookModelTests(TestCase):
             error.exception.message_dict,
         )
 
-    def test_negative_inventory_fails_validation(self) -> None:
+    def test_negative_inventory_fails_validation(
+        self,
+    ) -> None:
         book = Book(
             **self.get_book_data(inventory=-1)
         )
@@ -102,7 +118,9 @@ class BookModelTests(TestCase):
         with self.assertRaises(IntegrityError):
             with transaction.atomic():
                 Book.objects.create(
-                    **self.get_book_data(inventory=-1)
+                    **self.get_book_data(
+                        inventory=-1,
+                    )
                 )
 
     def test_invalid_cover_fails_validation(self) -> None:
@@ -120,19 +138,25 @@ class BookModelTests(TestCase):
 
     def test_hard_cover_passes_validation(self) -> None:
         book = Book(
-            **self.get_book_data(cover=Book.Cover.HARD)
+            **self.get_book_data(
+                cover=Book.Cover.HARD,
+            )
         )
 
         book.full_clean()
 
     def test_soft_cover_passes_validation(self) -> None:
         book = Book(
-            **self.get_book_data(cover=Book.Cover.SOFT)
+            **self.get_book_data(
+                cover=Book.Cover.SOFT,
+            )
         )
 
         book.full_clean()
 
-    def test_books_are_ordered_by_title_and_author(self) -> None:
+    def test_books_are_ordered_by_title_and_author(
+        self,
+    ) -> None:
         second_book = Book.objects.create(
             **self.get_book_data(
                 title="Clean Code",

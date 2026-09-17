@@ -1,5 +1,4 @@
 from decimal import Decimal
-from uuid import UUID
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -14,7 +13,7 @@ from books.serializers import BookSerializer
 BOOK_LIST_URL = reverse("books:book-list")
 
 
-def get_book_detail_url(book_id: UUID) -> str:
+def get_book_detail_url(book_id: int) -> str:
     return reverse(
         "books:book-detail",
         args=[book_id],
@@ -50,6 +49,7 @@ class BookViewSetTests(APITestCase):
             "daily_fee": Decimal("2.30"),
         }
         book_data.update(changes)
+
         return book_data
 
     def create_book(self, **changes) -> Book:
@@ -193,9 +193,7 @@ class BookViewSetTests(APITestCase):
     def test_generated_id_cannot_be_overridden(
         self,
     ) -> None:
-        requested_id = (
-            "00000000-0000-0000-0000-000000000001"
-        )
+        requested_id = 999_999
         book_data = self.get_book_data(
             id=requested_id,
         )
@@ -345,7 +343,9 @@ class BookViewSetTests(APITestCase):
 
         response = self.client.patch(
             get_book_detail_url(book.id),
-            data={"inventory": 20},
+            data={
+                "inventory": 20,
+            },
             format="json",
         )
 
@@ -400,7 +400,9 @@ class BookViewSetTests(APITestCase):
             status.HTTP_204_NO_CONTENT,
         )
         self.assertFalse(
-            Book.objects.filter(id=book.id).exists()
+            Book.objects.filter(
+                id=book.id,
+            ).exists()
         )
 
     def test_delete_missing_book_returns_not_found(

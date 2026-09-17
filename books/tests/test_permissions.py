@@ -1,6 +1,5 @@
 from decimal import Decimal
 from typing import Any
-from uuid import UUID
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractBaseUser
@@ -15,7 +14,7 @@ from books.models import Book
 BOOK_LIST_URL = reverse("books:book-list")
 
 
-def get_book_detail_url(book_id: UUID) -> str:
+def get_book_detail_url(book_id: int) -> str:
     return reverse(
         "books:book-detail",
         args=[book_id],
