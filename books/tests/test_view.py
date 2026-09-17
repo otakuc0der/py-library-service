@@ -1,9 +1,11 @@
 from decimal import Decimal
 from uuid import UUID
 
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from books.models import Book
 from books.serializers import BookSerializer
@@ -20,6 +22,24 @@ def get_book_detail_url(book_id: UUID) -> str:
 
 
 class BookViewSetTests(APITestCase):
+    def setUp(self) -> None:
+        self.admin_user = (
+            get_user_model().objects.create_user(
+                email="admin@example.com",
+                password="admin-password",
+                is_staff=True,
+            )
+        )
+        access_token = RefreshToken.for_user(
+            self.admin_user
+        ).access_token
+
+        self.client.credentials(
+            HTTP_AUTHORIZE=(
+                f"Bearer {access_token}"
+            )
+        )
+
     @staticmethod
     def get_book_data(**changes) -> dict:
         book_data = {
