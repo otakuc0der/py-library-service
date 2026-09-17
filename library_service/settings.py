@@ -127,6 +127,7 @@ MEDIA_ROOT = Path(
     )
 )
 
+AUTH_USER_MODEL = "users.User"
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": (
