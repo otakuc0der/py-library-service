@@ -1,4 +1,3 @@
-import uuid
 from decimal import Decimal
 
 from django.core.validators import MinValueValidator
@@ -11,11 +10,6 @@ class Book(models.Model):
         HARD = "hard", "Hard"
         SOFT = "soft", "Soft"
 
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False,
-    )
     title = models.CharField(max_length=255)
     author = models.CharField(max_length=255)
     cover = models.CharField(
