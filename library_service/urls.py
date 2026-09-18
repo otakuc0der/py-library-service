@@ -24,6 +24,13 @@ urlpatterns = [
         ),
     ),
     path(
+        "api/borrowings/",
+        include(
+            "borrowings.urls",
+            namespace="borrowings",
+        ),
+    ),
+    path(
         "api/schema/",
         SpectacularAPIView.as_view(),
         name="schema",
