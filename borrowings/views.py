@@ -1,5 +1,4 @@
 from django.db.models import QuerySet
-
 from drf_spectacular.utils import (
     OpenApiResponse,
     extend_schema,
@@ -9,7 +8,9 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
 from borrowings.models import Borrowing
-from borrowings.serializers import BorrowingReadSerializer
+from borrowings.serializers import (
+    BorrowingReadSerializer,
+)
 
 
 @extend_schema_view(
@@ -57,15 +58,27 @@ from borrowings.serializers import BorrowingReadSerializer
         },
     ),
 )
-class BorrowingViewSet(viewsets.ReadOnlyModelViewSet):
+class BorrowingViewSet(
+    viewsets.ReadOnlyModelViewSet,
+):
+    queryset = Borrowing.objects.select_related(
+        "book",
+        "user",
+    )
     serializer_class = BorrowingReadSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self) -> QuerySet[Borrowing]:
-        queryset = Borrowing.objects.select_related(
-            "book",
-            "user",
-        )
+    def get_queryset(
+        self,
+    ) -> QuerySet[Borrowing]:
+        queryset = super().get_queryset()
+
+        if getattr(
+            self,
+            "swagger_fake_view",
+            False,
+        ):
+            return queryset.none()
 
         if self.request.user.is_staff:
             return queryset
