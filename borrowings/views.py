@@ -1,14 +1,20 @@
+from typing import Any
+
 from django.db.models import QuerySet
 from drf_spectacular.utils import (
     OpenApiResponse,
     extend_schema,
     extend_schema_view,
 )
-from rest_framework import viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.serializers import BaseSerializer
 
 from borrowings.models import Borrowing
 from borrowings.serializers import (
+    BorrowingCreateSerializer,
     BorrowingReadSerializer,
 )
 
@@ -57,20 +63,50 @@ from borrowings.serializers import (
             ),
         },
     ),
+    create=extend_schema(
+        tags=["Borrowings"],
+        summary="Create a borrowing",
+        description=(
+            "Create a borrowing for the authenticated user "
+            "and decrease the selected book inventory by one."
+        ),
+        request=BorrowingCreateSerializer,
+        responses={
+            201: BorrowingReadSerializer,
+            400: OpenApiResponse(
+                description=(
+                    "Invalid borrowing data or the selected "
+                    "book is unavailable."
+                ),
+            ),
+            401: OpenApiResponse(
+                description=(
+                    "Authentication credentials were not "
+                    "provided or the access token is invalid."
+                ),
+            ),
+        },
+    ),
 )
 class BorrowingViewSet(
-    viewsets.ReadOnlyModelViewSet,
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
 ):
     queryset = Borrowing.objects.select_related(
         "book",
         "user",
     )
-    serializer_class = BorrowingReadSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(
-        self,
-    ) -> QuerySet[Borrowing]:
+    def get_serializer_class(self) -> type[BaseSerializer]:
+        if self.action == "create":
+            return BorrowingCreateSerializer
+
+        return BorrowingReadSerializer
+
+    def get_queryset(self) -> QuerySet[Borrowing]:
         queryset = super().get_queryset()
 
         if getattr(
@@ -85,4 +121,33 @@ class BorrowingViewSet(
 
         return queryset.filter(
             user=self.request.user,
+        )
+
+    def create(
+        self,
+        request: Request,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Response:
+        serializer = self.get_serializer(
+            data=request.data
+        )
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        borrowing = serializer.save(
+            user=request.user
+        )
+
+        response_serializer = (
+            BorrowingReadSerializer(
+                borrowing,
+                context=self.get_serializer_context(),
+            )
+        )
+
+        return Response(
+            response_serializer.data,
+            status=status.HTTP_201_CREATED,
         )
