@@ -29,3 +29,11 @@ def get_borrowing_date_errors(
         )
 
     return errors
+
+
+def validate_book_inventory(inventory: int) -> str | None:
+    return (
+        "This book is currently unavailable."
+        if inventory <= 0
+        else None
+    )
