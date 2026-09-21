@@ -6,47 +6,48 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from books.models import Book
-from books.serializers import BookSerializer
+from books.serializers import (
+    BookListSerializer,
+    BookSerializer,
+)
 from borrowings.models import Borrowing
 from borrowings.utils.validators import (
     get_borrowing_date_errors,
     validate_book_inventory,
 )
+from users.serializers import UserBriefSerializer
 
 
-class BorrowingReadSerializer(
-    serializers.ModelSerializer,
-):
-    book = BookSerializer(
-        read_only=True,
-    )
+class BorrowingListSerializer(serializers.ModelSerializer):
+    book = BookListSerializer(read_only=True)
+    user = UserBriefSerializer(read_only=True)
 
     class Meta:
         model = Borrowing
-        fields = (
+        fields = [
             "id",
             "borrow_date",
             "expected_return_date",
             "actual_return_date",
             "book",
             "user",
-        )
+        ]
         read_only_fields = fields
 
 
-class BorrowingCreateSerializer(
-    serializers.ModelSerializer,
-):
+class BorrowingDetailSerializer(BorrowingListSerializer):
+    book = BookSerializer(read_only=True)
+
+
+class BorrowingCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Borrowing
-        fields = (
+        fields = [
             "id",
             "expected_return_date",
             "book",
-        )
-        read_only_fields = (
-            "id",
-        )
+        ]
+        read_only_fields = ["id"]
 
     def validate_expected_return_date(
         self,
