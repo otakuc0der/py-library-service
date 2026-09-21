@@ -1,6 +1,7 @@
 from datetime import timedelta
 from decimal import Decimal
 from typing import Any
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractBaseUser
@@ -22,9 +23,7 @@ BORROWING_LIST_URL = reverse(
 )
 
 
-def get_borrowing_detail_url(
-    borrowing_id: int,
-) -> str:
+def get_borrowing_detail_url(borrowing_id: int) -> str:
     return reverse(
         "borrowings:borrowing-detail",
         args=[borrowing_id],
@@ -98,7 +97,9 @@ class BorrowingViewTestBase(APITestCase):
         self,
         user: AbstractBaseUser,
     ) -> None:
-        token = RefreshToken.for_user(user).access_token
+        token = RefreshToken.for_user(
+            user
+        ).access_token
 
         self.client.credentials(
             HTTP_AUTHORIZE=f"Bearer {token}"
@@ -106,7 +107,7 @@ class BorrowingViewTestBase(APITestCase):
 
 
 class UnauthenticatedBorrowingViewTests(
-    BorrowingViewTestBase,
+    BorrowingViewTestBase
 ):
     def setUp(self) -> None:
         self.user = self.create_user(
@@ -156,7 +157,7 @@ class UnauthenticatedBorrowingViewTests(
 
 
 class AuthenticatedBorrowingViewTests(
-    BorrowingViewTestBase,
+    BorrowingViewTestBase
 ):
     def setUp(self) -> None:
         self.user = self.create_user(
@@ -184,7 +185,9 @@ class AuthenticatedBorrowingViewTests(
 
         self.authenticate_user(self.user)
 
-    def test_list_returns_brief_book_and_user(self) -> None:
+    def test_list_returns_brief_book_and_user(
+        self
+    ) -> None:
         response = self.client.get(
             BORROWING_LIST_URL
         )
@@ -209,7 +212,9 @@ class AuthenticatedBorrowingViewTests(
             },
         )
 
-    def test_user_sees_only_own_borrowings(self) -> None:
+    def test_user_sees_only_own_borrowings(
+        self
+    ) -> None:
         response = self.client.get(
             BORROWING_LIST_URL
         )
@@ -223,7 +228,9 @@ class AuthenticatedBorrowingViewTests(
             self.borrowing.id,
         )
 
-    def test_user_can_retrieve_own_borrowing(self) -> None:
+    def test_user_can_retrieve_own_borrowing(
+        self
+    ) -> None:
         response = self.client.get(
             get_borrowing_detail_url(
                 self.borrowing.id
@@ -264,7 +271,7 @@ class AuthenticatedBorrowingViewTests(
         )
 
     def test_user_cannot_retrieve_other_borrowing(
-        self,
+        self
     ) -> None:
         response = self.client.get(
             get_borrowing_detail_url(
@@ -277,7 +284,13 @@ class AuthenticatedBorrowingViewTests(
             status.HTTP_404_NOT_FOUND,
         )
 
-    def test_user_can_create_borrowing(self) -> None:
+    @patch(
+        "borrowings.views.async_to_sync"
+    )
+    def test_user_can_create_borrowing(
+        self,
+        mock_async_to_sync,
+    ) -> None:
         initial_count = Borrowing.objects.count()
 
         response = self.client.post(
@@ -305,8 +318,12 @@ class AuthenticatedBorrowingViewTests(
             self.user,
         )
 
+    @patch(
+        "borrowings.views.async_to_sync"
+    )
     def test_create_returns_detail_representation(
         self,
+        mock_async_to_sync,
     ) -> None:
         response = self.client.post(
             BORROWING_LIST_URL,
@@ -316,6 +333,10 @@ class AuthenticatedBorrowingViewTests(
             format="json",
         )
 
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+        )
         self.assertEqual(
             set(response.data["book"]),
             {
@@ -383,7 +404,7 @@ class AuthenticatedBorrowingViewTests(
 
 
 class AdminBorrowingViewTests(
-    BorrowingViewTestBase,
+    BorrowingViewTestBase
 ):
     def setUp(self) -> None:
         self.admin = self.create_user(
@@ -401,7 +422,9 @@ class AdminBorrowingViewTests(
 
         self.authenticate_user(self.admin)
 
-    def test_admin_sees_all_borrowings(self) -> None:
+    def test_admin_sees_all_borrowings(
+        self
+    ) -> None:
         response = self.client.get(
             BORROWING_LIST_URL
         )
@@ -416,7 +439,7 @@ class AdminBorrowingViewTests(
         )
 
     def test_admin_can_retrieve_any_borrowing(
-        self,
+        self
     ) -> None:
         response = self.client.get(
             get_borrowing_detail_url(

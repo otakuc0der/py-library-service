@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "books",
     "users",
     "borrowings",
+    "notifications",
 ]
 
 MIDDLEWARE = [
@@ -175,3 +176,10 @@ SPECTACULAR_SETTINGS = {
         "displayRequestDuration": True,
     },
 }
+
+TELEGRAM_BOT_TOKEN = config("TELEGRAM_BOT_TOKEN")
+
+TELEGRAM_CHAT_ID = config(
+    "TELEGRAM_CHAT_ID",
+    cast=int,
+)
