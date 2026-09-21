@@ -1,5 +1,6 @@
 from typing import Any
 
+from asgiref.sync import async_to_sync
 from django.db import transaction
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
@@ -24,6 +25,10 @@ from borrowings.serializers import (
     BorrowingCreateSerializer,
     BorrowingDetailSerializer,
     BorrowingListSerializer,
+)
+from notifications.bot import (
+    format_new_borrowing_message,
+    send_telegram_message,
 )
 
 
@@ -89,7 +94,10 @@ from borrowings.serializers import (
             "one.\n\n"
             "The user, borrow date and actual return date "
             "are managed by the server and cannot be "
-            "provided by the client."
+            "provided by the client.\n\n"
+            "After the borrowing is created, a notification "
+            "with the borrowing details is sent to the "
+            "library administrators through Telegram."
         ),
         request=BorrowingCreateSerializer,
         responses={
@@ -121,7 +129,6 @@ class BorrowingViewSet(
     )
     permission_classes = [IsAuthenticated]
     filterset_class = BorrowingFilter
-
 
     def get_serializer_class(self) -> type[BaseSerializer]:
         if self.action == "create":
@@ -155,10 +162,20 @@ class BorrowingViewSet(
         *args: Any,
         **kwargs: Any,
     ) -> Response:
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        serializer = self.get_serializer(
+            data=request.data,
+        )
+        serializer.is_valid(
+            raise_exception=True,
+        )
 
-        borrowing = serializer.save(user=request.user)
+        borrowing = serializer.save(
+            user=request.user,
+        )
+
+        message = format_new_borrowing_message(borrowing)
+
+        async_to_sync(send_telegram_message)(message)
 
         response_serializer = (
             BorrowingDetailSerializer(
@@ -189,19 +206,19 @@ class BorrowingViewSet(
             200: BorrowingDetailSerializer,
             400: OpenApiResponse(
                 description=(
-                        "The borrowing has already been returned."
+                    "The borrowing has already been returned."
                 ),
             ),
             401: OpenApiResponse(
                 description=(
-                        "Authentication credentials were not "
-                        "provided or the access token is invalid."
+                    "Authentication credentials were not "
+                    "provided or the access token is invalid."
                 ),
             ),
             404: OpenApiResponse(
                 description=(
-                        "The borrowing does not exist or is not "
-                        "available to the authenticated user."
+                    "The borrowing does not exist or is not "
+                    "available to the authenticated user."
                 ),
             ),
         },
