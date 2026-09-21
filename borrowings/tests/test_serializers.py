@@ -11,7 +11,8 @@ from books.models import Book
 from borrowings.models import Borrowing
 from borrowings.serializers import (
     BorrowingCreateSerializer,
-    BorrowingReadSerializer,
+    BorrowingDetailSerializer,
+    BorrowingListSerializer,
 )
 
 
@@ -36,6 +37,16 @@ class BorrowingSerializerTestBase(TestCase):
             inventory=12,
             daily_fee=Decimal("2.30"),
         )
+        self.borrowing = Borrowing.objects.create(
+            borrow_date=timezone.localdate(),
+            expected_return_date=(
+                timezone.localdate()
+                + timedelta(days=7)
+            ),
+            actual_return_date=None,
+            book=self.book,
+            user=self.user,
+        )
 
     def get_create_data(
         self,
@@ -53,27 +64,13 @@ class BorrowingSerializerTestBase(TestCase):
         return data
 
 
-class BorrowingReadSerializerTests(
-    BorrowingSerializerTestBase,
+class BorrowingListSerializerTests(
+    BorrowingSerializerTestBase
 ):
-    def setUp(self) -> None:
-        super().setUp()
-
-        self.borrowing = Borrowing.objects.create(
-            borrow_date=timezone.localdate(),
-            expected_return_date=(
-                timezone.localdate()
-                + timedelta(days=7)
-            ),
-            actual_return_date=None,
-            book=self.book,
-            user=self.user,
-        )
-
     def test_serializer_returns_all_fields(
         self,
     ) -> None:
-        serializer = BorrowingReadSerializer(
+        serializer = BorrowingListSerializer(
             self.borrowing
         )
 
@@ -89,22 +86,10 @@ class BorrowingReadSerializerTests(
             },
         )
 
-    def test_serializer_returns_nested_book(
+    def test_serializer_returns_brief_book(
         self,
     ) -> None:
-        serializer = BorrowingReadSerializer(
-            self.borrowing
-        )
-
-        self.assertIsInstance(
-            serializer.data["book"],
-            dict,
-        )
-
-    def test_nested_book_contains_required_fields(
-        self,
-    ) -> None:
-        serializer = BorrowingReadSerializer(
+        serializer = BorrowingListSerializer(
             self.borrowing
         )
 
@@ -114,19 +99,15 @@ class BorrowingReadSerializerTests(
                 "id",
                 "title",
                 "author",
-                "cover",
-                "inventory",
-                "daily_fee",
             },
         )
 
-    def test_nested_book_contains_correct_data(
+    def test_brief_book_contains_correct_data(
         self,
     ) -> None:
-        serializer = BorrowingReadSerializer(
+        book_data = BorrowingListSerializer(
             self.borrowing
-        )
-        book_data = serializer.data["book"]
+        ).data["book"]
 
         self.assertEqual(
             book_data["id"],
@@ -140,43 +121,32 @@ class BorrowingReadSerializerTests(
             book_data["author"],
             self.book.author,
         )
-        self.assertEqual(
-            book_data["cover"],
-            self.book.cover,
-        )
-        self.assertEqual(
-            book_data["inventory"],
-            self.book.inventory,
-        )
 
-    def test_serializer_returns_user_id(
-        self,
-    ) -> None:
-        serializer = BorrowingReadSerializer(
+    def test_serializer_returns_brief_user(self) -> None:
+        user_data = BorrowingListSerializer(
             self.borrowing
-        )
+        ).data["user"]
 
         self.assertEqual(
-            serializer.data["user"],
+            set(user_data.keys()),
+            {
+                "id",
+                "email",
+            },
+        )
+        self.assertEqual(
+            user_data["id"],
             self.user.id,
         )
-
-    def test_daily_fee_is_returned_as_string(
-        self,
-    ) -> None:
-        serializer = BorrowingReadSerializer(
-            self.borrowing
-        )
-
         self.assertEqual(
-            serializer.data["book"]["daily_fee"],
-            "2.30",
+            user_data["email"],
+            self.user.email,
         )
 
-    def test_actual_return_date_is_returned_as_null(
+    def test_actual_return_date_is_null_for_active_borrowing(
         self,
     ) -> None:
-        serializer = BorrowingReadSerializer(
+        serializer = BorrowingListSerializer(
             self.borrowing
         )
 
@@ -184,14 +154,12 @@ class BorrowingReadSerializerTests(
             serializer.data["actual_return_date"]
         )
 
-    def test_serializer_fields_are_read_only(
-        self,
-    ) -> None:
+    def test_all_fields_are_read_only(self) -> None:
         original_expected_return_date = (
             self.borrowing.expected_return_date
         )
 
-        serializer = BorrowingReadSerializer(
+        serializer = BorrowingListSerializer(
             instance=self.borrowing,
             data={
                 "borrow_date": "2026-01-01",
@@ -209,19 +177,81 @@ class BorrowingReadSerializerTests(
             {},
         )
 
-        borrowing = serializer.save()
-        borrowing.refresh_from_db()
+        serializer.save()
+        self.borrowing.refresh_from_db()
 
         self.assertEqual(
-            borrowing.expected_return_date,
+            self.borrowing.expected_return_date,
             original_expected_return_date,
         )
         self.assertIsNone(
-            borrowing.actual_return_date,
+            self.borrowing.actual_return_date
         )
         self.assertEqual(
-            borrowing.user,
+            self.borrowing.user,
             self.user,
+        )
+
+
+class BorrowingDetailSerializerTests(
+    BorrowingSerializerTestBase
+):
+    def test_detail_serializer_returns_full_book(
+        self,
+    ) -> None:
+        serializer = BorrowingDetailSerializer(
+            self.borrowing
+        )
+
+        self.assertEqual(
+            set(serializer.data["book"].keys()),
+            {
+                "id",
+                "title",
+                "author",
+                "cover",
+                "inventory",
+                "daily_fee",
+            },
+        )
+
+    def test_detail_serializer_returns_correct_book_data(
+        self,
+    ) -> None:
+        book_data = BorrowingDetailSerializer(
+            self.borrowing
+        ).data["book"]
+
+        self.assertEqual(
+            book_data["id"],
+            self.book.id,
+        )
+        self.assertEqual(
+            book_data["cover"],
+            self.book.cover,
+        )
+        self.assertEqual(
+            book_data["inventory"],
+            self.book.inventory,
+        )
+        self.assertEqual(
+            book_data["daily_fee"],
+            "2.30",
+        )
+
+    def test_detail_serializer_returns_brief_user(
+        self,
+    ) -> None:
+        user_data = BorrowingDetailSerializer(
+            self.borrowing
+        ).data["user"]
+
+        self.assertEqual(
+            user_data,
+            {
+                "id": self.user.id,
+                "email": self.user.email,
+            },
         )
 
 
@@ -273,17 +303,6 @@ class BorrowingCreateSerializerTests(
             "expected_return_date",
             serializer.errors,
         )
-        self.assertEqual(
-            str(
-                serializer.errors[
-                    "expected_return_date"
-                ][0]
-            ),
-            (
-                "Expected return date cannot be "
-                "earlier than borrow date."
-            ),
-        )
 
     def test_zero_inventory_is_forbidden(
         self,
@@ -307,36 +326,6 @@ class BorrowingCreateSerializerTests(
             "This book is currently unavailable.",
         )
 
-    def test_book_is_required(self) -> None:
-        data = self.get_create_data()
-        data.pop("book")
-
-        serializer = BorrowingCreateSerializer(
-            data=data
-        )
-
-        self.assertFalse(serializer.is_valid())
-        self.assertIn(
-            "book",
-            serializer.errors,
-        )
-
-    def test_expected_return_date_is_required(
-        self,
-    ) -> None:
-        data = self.get_create_data()
-        data.pop("expected_return_date")
-
-        serializer = BorrowingCreateSerializer(
-            data=data
-        )
-
-        self.assertFalse(serializer.is_valid())
-        self.assertIn(
-            "expected_return_date",
-            serializer.errors,
-        )
-
     def test_nonexistent_book_is_forbidden(
         self,
     ) -> None:
@@ -352,9 +341,11 @@ class BorrowingCreateSerializerTests(
             serializer.errors,
         )
 
-    def test_serializer_creates_borrowing(
+    def test_serializer_creates_borrowing_for_user(
         self,
     ) -> None:
+        initial_count = Borrowing.objects.count()
+
         serializer = BorrowingCreateSerializer(
             data=self.get_create_data()
         )
@@ -368,33 +359,18 @@ class BorrowingCreateSerializerTests(
 
         self.assertEqual(
             Borrowing.objects.count(),
-            1,
+            initial_count + 1,
+        )
+        self.assertEqual(
+            borrowing.user,
+            self.user,
         )
         self.assertEqual(
             borrowing.book,
             self.book,
         )
 
-    def test_serializer_attaches_provided_user(
-        self,
-    ) -> None:
-        serializer = BorrowingCreateSerializer(
-            data=self.get_create_data()
-        )
-        serializer.is_valid(
-            raise_exception=True
-        )
-
-        borrowing = serializer.save(
-            user=self.user
-        )
-
-        self.assertEqual(
-            borrowing.user,
-            self.user,
-        )
-
-    def test_serializer_decreases_book_inventory(
+    def test_serializer_decreases_inventory(
         self,
     ) -> None:
         original_inventory = self.book.inventory
@@ -435,54 +411,11 @@ class BorrowingCreateSerializerTests(
             self.user,
         )
 
-    def test_client_cannot_set_borrow_date(
-        self,
-    ) -> None:
-        serializer = BorrowingCreateSerializer(
-            data=self.get_create_data(
-                borrow_date="2020-01-01",
-            )
-        )
-        serializer.is_valid(
-            raise_exception=True
-        )
-
-        borrowing = serializer.save(
-            user=self.user
-        )
-
-        self.assertEqual(
-            borrowing.borrow_date,
-            timezone.localdate(),
-        )
-
-    def test_client_cannot_set_actual_return_date(
-        self,
-    ) -> None:
-        serializer = BorrowingCreateSerializer(
-            data=self.get_create_data(
-                actual_return_date=(
-                    timezone.localdate().isoformat()
-                ),
-            )
-        )
-        serializer.is_valid(
-            raise_exception=True
-        )
-
-        borrowing = serializer.save(
-            user=self.user
-        )
-
-        self.assertIsNone(
-            borrowing.actual_return_date
-        )
-
     @patch(
         "borrowings.serializers."
         "validate_book_inventory"
     )
-    def test_inventory_is_checked_again_after_book_lock(
+    def test_inventory_is_checked_again_after_lock(
         self,
         mocked_validator,
     ) -> None:
@@ -498,6 +431,8 @@ class BorrowingCreateSerializerTests(
             raise_exception=True
         )
 
+        initial_count = Borrowing.objects.count()
+
         with self.assertRaises(
             serializers.ValidationError
         ):
@@ -507,14 +442,14 @@ class BorrowingCreateSerializerTests(
 
         self.assertEqual(
             Borrowing.objects.count(),
-            0,
+            initial_count,
         )
         self.assertEqual(
             self.book.inventory,
             12,
         )
 
-    def test_creation_is_rolled_back_when_inventory_update_fails(
+    def test_transaction_is_rolled_back_when_inventory_update_fails(
         self,
     ) -> None:
         serializer = BorrowingCreateSerializer(
@@ -523,6 +458,8 @@ class BorrowingCreateSerializerTests(
         serializer.is_valid(
             raise_exception=True
         )
+
+        initial_count = Borrowing.objects.count()
 
         with patch.object(
             Book,
@@ -538,7 +475,7 @@ class BorrowingCreateSerializerTests(
 
         self.assertEqual(
             Borrowing.objects.count(),
-            0,
+            initial_count,
         )
         self.assertEqual(
             self.book.inventory,

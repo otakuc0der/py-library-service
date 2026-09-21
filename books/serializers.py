@@ -15,3 +15,14 @@ class BookSerializer(serializers.ModelSerializer):
             "daily_fee",
         ]
         read_only_fields = ["id"]
+
+
+class BookListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Book
+        fields = [
+            "id",
+            "title",
+            "author",
+        ]
+        read_only_fields = fields
