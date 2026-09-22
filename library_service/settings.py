@@ -183,3 +183,36 @@ TELEGRAM_CHAT_ID = config(
     "TELEGRAM_CHAT_ID",
     cast=int,
 )
+
+CELERY_BROKER_URL = config("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND")
+
+CELERY_TIMEZONE = config(
+    "CELERY_TIMEZONE",
+    default="Europe/Kyiv",
+)
+
+CELERY_TASK_TRACK_STARTED = config(
+    "CELERY_TASK_TRACK_STARTED",
+    default=True,
+    cast=bool,
+)
+
+CELERY_TASK_TIME_LIMIT = config(
+    "CELERY_TASK_TIME_LIMIT",
+    default=1800,
+    cast=int,
+)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "loggers": {
+        "httpx": {
+            "level": "WARNING",
+        },
+        "httpcore": {
+            "level": "WARNING",
+        },
+    },
+}

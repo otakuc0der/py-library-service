@@ -1,6 +1,5 @@
 from typing import Any
 
-from asgiref.sync import async_to_sync
 from django.db import transaction
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
@@ -26,10 +25,7 @@ from borrowings.serializers import (
     BorrowingDetailSerializer,
     BorrowingListSerializer,
 )
-from notifications.bot import (
-    format_new_borrowing_message,
-    send_telegram_message,
-)
+from notifications.tasks import send_new_borrowing_notification
 
 
 @extend_schema_view(
@@ -95,9 +91,9 @@ from notifications.bot import (
             "The user, borrow date and actual return date "
             "are managed by the server and cannot be "
             "provided by the client.\n\n"
-            "After the borrowing is created, a notification "
-            "with the borrowing details is sent to the "
-            "library administrators through Telegram."
+            "After the borrowing is created, a Telegram "
+            "notification with the borrowing details is "
+            "queued for delivery to the library administrators."
         ),
         request=BorrowingCreateSerializer,
         responses={
@@ -173,9 +169,13 @@ class BorrowingViewSet(
             user=request.user,
         )
 
-        message = format_new_borrowing_message(borrowing)
-
-        async_to_sync(send_telegram_message)(message)
+        transaction.on_commit(
+            lambda: (
+                send_new_borrowing_notification.delay(
+                    borrowing.id
+                )
+            )
+        )
 
         response_serializer = (
             BorrowingDetailSerializer(

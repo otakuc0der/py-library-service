@@ -285,11 +285,11 @@ class AuthenticatedBorrowingViewTests(
         )
 
     @patch(
-        "borrowings.views.async_to_sync"
+        "borrowings.views.send_new_borrowing_notification.delay"
     )
     def test_user_can_create_borrowing(
         self,
-        mock_async_to_sync,
+        mock_send_new_borrowing_notification_delay,
     ) -> None:
         initial_count = Borrowing.objects.count()
 
@@ -319,11 +319,11 @@ class AuthenticatedBorrowingViewTests(
         )
 
     @patch(
-        "borrowings.views.async_to_sync"
+        "borrowings.views.send_new_borrowing_notification.delay"
     )
     def test_create_returns_detail_representation(
         self,
-        mock_async_to_sync,
+        mock_send_new_borrowing_notification_delay,
     ) -> None:
         response = self.client.post(
             BORROWING_LIST_URL,
