@@ -1,0 +1,89 @@
+services:
+  app:
+    build:
+      context: .
+    container_name: library_app
+    env_file:
+      - .env
+    environment:
+      STATIC_ROOT: /files/static
+      MEDIA_ROOT: /files/media
+    ports:
+      - "8000:8000"
+    volumes:
+      - media_data:/files/media
+      - static_data:/files/static
+    command: >
+      sh -c "python manage.py wait_for_db &&
+             python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  db:
+    image: postgres:17.6-alpine
+    container_name: library_postgres
+    env_file:
+      - .env
+    ports:
+      - "25432:5432"
+    volumes:
+      - postgres_data:${PGDATA}
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: library_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  celery_worker:
+    build:
+      context: .
+    container_name: library_celery_worker
+    env_file:
+      - .env
+    command: >
+      sh -c "python manage.py wait_for_db &&
+             celery -A library_service worker -l INFO"
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  celery_beat:
+    build:
+      context: .
+    container_name: library_celery_beat
+    env_file:
+      - .env
+    command: >
+      sh -c "python manage.py wait_for_db &&
+             celery -A library_service beat -l INFO"
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  flower:
+    build:
+      context: .
+    container_name: library_flower
+    env_file:
+      - .env
+    command: >
+      celery -A library_service flower --port=5555
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  media_data:
+  static_data:

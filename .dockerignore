@@ -1,0 +1,12 @@
+.env
+.venv
+.git
+.idea
+__pycache__
+*.py[cod]
+db.sqlite3
+celerybeat-schedule*
+.pytest_cache
+.coverage
+media
+staticfiles
