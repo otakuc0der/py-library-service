@@ -1,5 +1,6 @@
 from typing import Any
 
+from django.conf import settings
 from django.db import transaction
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
@@ -26,6 +27,8 @@ from borrowings.serializers import (
     BorrowingListSerializer,
 )
 from notifications.tasks import send_new_borrowing_notification
+from payments.models import Payment
+from payments.services import create_checkout_payment
 
 
 @extend_schema_view(
@@ -197,9 +200,18 @@ class BorrowingViewSet(
             "The endpoint sets the actual return date to the "
             "current date and increases the related book "
             "inventory by one.\n\n"
+            "If the actual return date is later than the "
+            "expected return date, the system creates a pending "
+            "fine payment and a Stripe Checkout Session. The "
+            "fine amount is calculated as the number of overdue "
+            "days multiplied by the book daily fee and the "
+            "configured fine multiplier.\n\n"
+            "The created fine payment can be retrieved through "
+            "the payments API. The user can follow its session "
+            "URL to complete the payment.\n\n"
             "A borrowing cannot be returned more than once. "
             "Regular users can return only their own books. "
-            "Admins can return any borrowing."
+            "Administrators can return any borrowing."
         ),
         request=None,
         responses={
@@ -253,7 +265,7 @@ class BorrowingViewSet(
                             "This borrowing has already "
                             "been returned."
                         ),
-                    }
+                    },
                 )
 
             locked_book = (
@@ -272,16 +284,39 @@ class BorrowingViewSet(
 
             locked_book.inventory += 1
             locked_book.save(
-                update_fields=["inventory"],
+                update_fields=[
+                    "inventory",
+                ],
             )
 
             borrowing.book = locked_book
 
-        response_serializer = (
-            BorrowingDetailSerializer(
-                borrowing,
-                context=self.get_serializer_context(),
-            )
+            overdue_days = (
+                borrowing.actual_return_date
+                - borrowing.expected_return_date
+            ).days
+
+            if overdue_days > 0:
+                fine_amount = (
+                    overdue_days
+                    * locked_book.daily_fee
+                    * settings.FINE_MULTIPLIER
+                )
+
+                create_checkout_payment(
+                    borrowing=borrowing,
+                    request=request,
+                    money_to_pay=fine_amount,
+                    payment_type=Payment.Type.FINE,
+                    product_name=(
+                        "Pay an overdue fine for "
+                        f"the '{locked_book.title}' book."
+                    ),
+                )
+
+        response_serializer = BorrowingDetailSerializer(
+            borrowing,
+            context=self.get_serializer_context(),
         )
 
         return Response(
