@@ -1,47 +1,44 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.db import transaction
-from django.http import HttpRequest
 from django.urls import reverse
+from rest_framework.request import Request
 
 from borrowings.models import Borrowing
+from notifications.tasks import send_payment_completed_notification
 from payments.exceptions import PaymentSessionMismatchError
 from payments.models import Payment
 from payments.stripe_client import get_stripe_client
-from notifications.tasks import send_new_payment_notification
 
 
 def get_amount_in_cents(payment: Payment) -> int:
-    return int(
-        payment.money_to_pay * settings.CENTS_PER_DOLLAR
-    )
+    return int(payment.money_to_pay * settings.CENTS_PER_DOLLAR)
 
 
-def create_payment_for_borrowing(
+def create_checkout_payment(
+    *,
     borrowing: Borrowing,
-    request: HttpRequest,
+    request: Request,
+    money_to_pay: Decimal,
+    payment_type: Payment.Type,
+    product_name: str,
 ) -> Payment:
-    difference_in_days = (
-        borrowing.expected_return_date - borrowing.borrow_date
-    ).days
-
-    if difference_in_days <= 0:
-        raise ValueError(
-            "Expected return date must be after borrowing date."
-        )
+    if money_to_pay <= Decimal("0.00"):
+        raise ValueError("Payment amount must be greater than zero.")
 
     success_url = request.build_absolute_uri(
-        reverse("payments:checkout-success")
+        reverse("payments:checkout-success"),
     )
     cancel_url = request.build_absolute_uri(
-        reverse("payments:checkout-cancel")
+        reverse("payments:checkout-cancel"),
     )
 
     with transaction.atomic():
         payment = Payment.objects.create(
             borrowing=borrowing,
-            money_to_pay=(
-                borrowing.book.daily_fee * difference_in_days
-            ),
+            type=payment_type,
+            money_to_pay=money_to_pay,
         )
 
         session = (
@@ -52,37 +49,68 @@ def create_payment_for_borrowing(
                         {
                             "price_data": {
                                 "currency": "usd",
-                                "unit_amount": get_amount_in_cents(
-                                    payment
+                                "unit_amount": (
+                                    get_amount_in_cents(payment)
                                 ),
                                 "product_data": {
-                                    "name": (
-                                        "Pay for borrowing "
-                                        f"the '{borrowing.book.title}' book."
-                                    ),
+                                    "name": product_name,
                                 },
                             },
                             "quantity": 1,
-                        }
+                        },
                     ],
-                    "client_reference_id": str(payment.id),
+                    "client_reference_id": str(
+                        payment.id,
+                    ),
                     "mode": "payment",
                     "success_url": (
                         f"{success_url}"
-                        "?session_id={CHECKOUT_SESSION_ID}"
+                        f"?session_id={{CHECKOUT_SESSION_ID}}"
                     ),
                     "cancel_url": cancel_url,
-                }
+                },
             )
         )
 
         payment.session_id = session.id
         payment.session_url = session.url
         payment.save(
-            update_fields=["session_id", "session_url"]
+            update_fields=[
+                "session_id",
+                "session_url",
+            ],
         )
 
     return payment
+
+
+def create_payment_for_borrowing(
+    borrowing: Borrowing,
+    request: Request,
+) -> Payment:
+    rental_days = (
+        borrowing.expected_return_date
+        - borrowing.borrow_date
+    ).days
+
+    if rental_days <= 0:
+        raise ValueError(
+            "Expected return date must be after "
+            "borrowing date."
+        )
+
+    money_to_pay = borrowing.book.daily_fee * rental_days
+
+    return create_checkout_payment(
+        borrowing=borrowing,
+        request=request,
+        money_to_pay=money_to_pay,
+        payment_type=Payment.Type.PAYMENT,
+        product_name=(
+            "Pay for borrowing "
+            f"the '{borrowing.book.title}' book."
+        ),
+    )
 
 
 def mark_payment_as_paid(session) -> None:
@@ -103,11 +131,16 @@ def mark_payment_as_paid(session) -> None:
                 "Stripe Session does not match the payment."
             )
 
-        if payment.status != Payment.Status.PAID:
-            payment.status = Payment.Status.PAID
-            payment.save(update_fields=["status"])
+        if payment.status == Payment.Status.PAID:
+            return
 
-            payment_id = payment.id
-            transaction.on_commit(
-                lambda: send_new_payment_notification.delay(payment_id)
+        payment.status = Payment.Status.PAID
+        payment.save(update_fields=["status"])
+
+        payment_id = payment.id
+
+        transaction.on_commit(
+            lambda: send_payment_completed_notification.delay(
+                payment_id
             )
+        )

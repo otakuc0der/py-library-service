@@ -7,16 +7,15 @@ from borrowings.utils.helpers import (
 )
 from notifications.bot import (
     format_new_borrowing_message,
+    format_payment_notification_message,
     send_overdue_borrowings_report,
-    send_telegram_message, format_payment_completed_message,
+    send_telegram_message,
 )
 from payments.models import Payment
 
 
 @shared_task
-def send_new_borrowing_notification(
-    borrowing_id: int,
-) -> None:
+def send_new_borrowing_notification(borrowing_id: int) -> None:
     borrowing = (
         Borrowing.objects
         .select_related(
@@ -36,7 +35,7 @@ def send_new_borrowing_notification(
 
 
 @shared_task
-def send_new_payment_notification(payment_id: int) -> None:
+def send_payment_completed_notification(payment_id: int) -> None:
     payment = (
         Payment.objects
         .select_related(
@@ -47,13 +46,9 @@ def send_new_payment_notification(payment_id: int) -> None:
         .get(id=payment_id)
     )
 
-    message = format_payment_completed_message(
-        payment
-    )
+    message = format_payment_notification_message(payment)
 
-    async_to_sync(
-        send_telegram_message
-    )(message)
+    async_to_sync(send_telegram_message)(message)
 
 
 @shared_task
