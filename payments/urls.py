@@ -1,7 +1,11 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from payments.views import PaymentViewSet
+from payments.views import (
+    PaymentViewSet,
+    checkout_cancel,
+    checkout_success,
+)
 
 
 router = DefaultRouter()
@@ -15,7 +19,14 @@ app_name = "payments"
 
 urlpatterns = [
     path(
-        "",
-        include(router.urls),
+        "checkout/success/",
+        checkout_success,
+        name="checkout-success",
     ),
+    path(
+        "checkout/cancel/",
+        checkout_cancel,
+        name="checkout-cancel",
+    ),
+    path("", include(router.urls)),
 ]
