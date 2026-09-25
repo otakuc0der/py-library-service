@@ -30,7 +30,7 @@ class Payment(models.Model):
         on_delete=models.CASCADE,
         related_name="payments",
     )
-    session_url = models.URLField()
+    session_url = models.URLField(max_length=2048)
     session_id = models.CharField(
         max_length=255,
         unique=True,
