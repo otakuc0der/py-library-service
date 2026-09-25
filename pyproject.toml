@@ -16,6 +16,7 @@ dependencies = [
     "psycopg[binary]>=3.3.5",
     "python-decouple>=3.8",
     "python-telegram-bot>=22.8",
+    "stripe>=15.6.1",
 ]
 
 [dependency-groups]
