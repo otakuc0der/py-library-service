@@ -15,12 +15,15 @@ from borrowings.utils.validators import (
     get_borrowing_date_errors,
     validate_book_inventory,
 )
+from payments.serializers import PaymentSerializer
+from payments.services import create_payment_for_borrowing
 from users.serializers import UserBriefSerializer
 
 
 class BorrowingListSerializer(serializers.ModelSerializer):
     book = BookListSerializer(read_only=True)
     user = UserBriefSerializer(read_only=True)
+    payments = PaymentSerializer(read_only=True, many=True)
 
     class Meta:
         model = Borrowing
@@ -31,6 +34,7 @@ class BorrowingListSerializer(serializers.ModelSerializer):
             "actual_return_date",
             "book",
             "user",
+            "payments",
         ]
         read_only_fields = fields
 
@@ -113,6 +117,11 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
             locked_book.inventory -= 1
             locked_book.save(
                 update_fields=["inventory"],
+            )
+
+            create_payment_for_borrowing(
+                borrowing=borrowing,
+                request=self.context["request"],
             )
 
             return borrowing
