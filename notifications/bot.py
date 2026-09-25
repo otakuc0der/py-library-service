@@ -192,3 +192,46 @@ def format_payment_completed_message(payment: Payment) -> str:
         f"Borrowing ID: {borrowing.id}\n"
         "Status: ✅ Paid"
     )
+
+
+def format_fine_payment_completed_message(payment: Payment) -> str:
+    borrowing = payment.borrowing
+
+    if borrowing.actual_return_date is None:
+        raise ValueError("A fine payment requires a returned borrowing.")
+
+    overdue_days = (
+        borrowing.actual_return_date
+        - borrowing.expected_return_date
+    ).days
+
+    return (
+        "🚨 <b>Overdue Fine Payment Received</b>\n\n"
+        "👤 <b>Borrower</b>\n"
+        f"Email: {escape(borrowing.user.email)}\n"
+        f"User ID: {borrowing.user_id}\n\n"
+        "📖 <b>Book</b>\n"
+        f"Title: {escape(borrowing.book.title)}\n"
+        f"Author: {escape(borrowing.book.author)}\n"
+        f"Book ID: {borrowing.book_id}\n\n"
+        "⏳ <b>Overdue Details</b>\n"
+        f"Expected return: "
+        f"{borrowing.expected_return_date:%B %d, %Y}\n"
+        f"Returned on: "
+        f"{borrowing.actual_return_date:%B %d, %Y}\n"
+        f"Overdue by: {overdue_days} "
+        f"{'day' if overdue_days == 1 else 'days'}\n\n"
+        "💰 <b>Fine Payment Details</b>\n"
+        f"Amount: ${payment.money_to_pay:.2f}\n"
+        f"Payment ID: {payment.id}\n"
+        f"Borrowing ID: {borrowing.id}\n"
+        "Type: Overdue fine\n"
+        "Status: ✅ Paid"
+    )
+
+
+def format_payment_notification_message(payment: Payment) -> str:
+    if payment.type == Payment.Type.FINE:
+        return format_fine_payment_completed_message(payment)
+
+    return format_payment_completed_message(payment)
