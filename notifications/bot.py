@@ -5,6 +5,7 @@ from django.utils import timezone
 from telegram import Bot
 
 from borrowings.models import Borrowing
+from payments.models import Payment
 
 
 def format_new_borrowing_message(borrowing: Borrowing) -> str:
@@ -171,4 +172,23 @@ async def send_overdue_borrowings_report(
     )
     await send_telegram_message(
         completed_message
+    )
+
+
+def format_payment_completed_message(payment: Payment) -> str:
+    borrowing = payment.borrowing
+
+    return (
+        "💳 <b>Borrowing Payment Received</b>\n\n"
+        "👤 <b>Borrower</b>\n"
+        f"Email: {escape(borrowing.user.email)}\n"
+        f"User ID: {borrowing.user_id}\n\n"
+        "📖 <b>Book</b>\n"
+        f"Title: {escape(borrowing.book.title)}\n"
+        f"Book ID: {borrowing.book_id}\n\n"
+        "💰 <b>Payment Details</b>\n"
+        f"Amount: ${payment.money_to_pay:.2f}\n"
+        f"Payment ID: {payment.id}\n"
+        f"Borrowing ID: {borrowing.id}\n"
+        "Status: ✅ Paid"
     )
