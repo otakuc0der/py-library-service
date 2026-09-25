@@ -6,7 +6,7 @@ from payments.models import Payment
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
-        fields = (
+        fields = [
             "id",
             "status",
             "type",
@@ -14,5 +14,5 @@ class PaymentSerializer(serializers.ModelSerializer):
             "session_url",
             "session_id",
             "money_to_pay",
-        )
+        ]
         read_only_fields = fields
