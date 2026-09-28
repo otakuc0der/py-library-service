@@ -22,6 +22,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "black[d]>=26.5.1",
+    "coverage>=7.16.2",
     "django-debug-toolbar>=8.0.0",
     "django-stubs>=6.1.1",
     "flake8>=7.3.0",
