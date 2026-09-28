@@ -14,9 +14,7 @@ class UserModelTests(TestCase):
             user.email,
             "user@example.com",
         )
-        self.assertTrue(
-            user.check_password("test-password")
-        )
+        self.assertTrue(user.check_password("test-password"))
 
     def test_create_user_normalizes_email(self) -> None:
         user = get_user_model().objects.create_user(

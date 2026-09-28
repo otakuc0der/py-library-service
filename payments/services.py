@@ -41,35 +41,29 @@ def create_checkout_payment(
             money_to_pay=money_to_pay,
         )
 
-        session = (
-            get_stripe_client()
-            .v1.checkout.sessions.create(
-                params={
-                    "line_items": [
-                        {
-                            "price_data": {
-                                "currency": "usd",
-                                "unit_amount": (
-                                    get_amount_in_cents(payment)
-                                ),
-                                "product_data": {
-                                    "name": product_name,
-                                },
+        session = get_stripe_client().v1.checkout.sessions.create(
+            params={
+                "line_items": [
+                    {
+                        "price_data": {
+                            "currency": "usd",
+                            "unit_amount": (get_amount_in_cents(payment)),
+                            "product_data": {
+                                "name": product_name,
                             },
-                            "quantity": 1,
                         },
-                    ],
-                    "client_reference_id": str(
-                        payment.id,
-                    ),
-                    "mode": "payment",
-                    "success_url": (
-                        f"{success_url}"
-                        f"?session_id={{CHECKOUT_SESSION_ID}}"
-                    ),
-                    "cancel_url": cancel_url,
-                },
-            )
+                        "quantity": 1,
+                    },
+                ],
+                "client_reference_id": str(
+                    payment.id,
+                ),
+                "mode": "payment",
+                "success_url": (
+                    f"{success_url}" f"?session_id={{CHECKOUT_SESSION_ID}}"
+                ),
+                "cancel_url": cancel_url,
+            },
         )
 
         payment.session_id = session.id
@@ -88,16 +82,10 @@ def create_payment_for_borrowing(
     borrowing: Borrowing,
     request: Request,
 ) -> Payment:
-    rental_days = (
-        borrowing.expected_return_date
-        - borrowing.borrow_date
-    ).days
+    rental_days = (borrowing.expected_return_date - borrowing.borrow_date).days
 
     if rental_days <= 0:
-        raise ValueError(
-            "Expected return date must be after "
-            "borrowing date."
-        )
+        raise ValueError("Expected return date must be after " "borrowing date.")
 
     money_to_pay = borrowing.book.daily_fee * rental_days
 
@@ -106,20 +94,13 @@ def create_payment_for_borrowing(
         request=request,
         money_to_pay=money_to_pay,
         payment_type=Payment.Type.PAYMENT,
-        product_name=(
-            "Pay for borrowing "
-            f"the '{borrowing.book.title}' book."
-        ),
+        product_name=("Pay for borrowing " f"the '{borrowing.book.title}' book."),
     )
 
 
 def mark_payment_as_paid(session) -> None:
     with transaction.atomic():
-        payment = (
-            Payment.objects
-            .select_for_update()
-            .get(session_id=session.id)
-        )
+        payment = Payment.objects.select_for_update().get(session_id=session.id)
 
         if (
             str(payment.id) != str(session.client_reference_id)
@@ -140,7 +121,5 @@ def mark_payment_as_paid(session) -> None:
         payment_id = payment.id
 
         transaction.on_commit(
-            lambda: send_payment_completed_notification.delay(
-                payment_id
-            )
+            lambda: send_payment_completed_notification.delay(payment_id)
         )

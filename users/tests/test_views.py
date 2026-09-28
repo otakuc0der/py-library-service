@@ -9,7 +9,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from users.serializers import UserSerializer
 
-
 CREATE_USER_URL = reverse("users:create")
 TOKEN_URL = reverse("users:token-obtain-pair")
 REFRESH_TOKEN_URL = reverse("users:token-refresh")
@@ -145,9 +144,7 @@ class PublicUserApiTests(APITestCase):
             "email",
             response.data,
         )
-        self.assertFalse(
-            get_user_model().objects.exists()
-        )
+        self.assertFalse(get_user_model().objects.exists())
 
     def test_create_user_with_short_password_fails(
         self,
@@ -169,9 +166,7 @@ class PublicUserApiTests(APITestCase):
             "password",
             response.data,
         )
-        self.assertFalse(
-            get_user_model().objects.exists()
-        )
+        self.assertFalse(get_user_model().objects.exists())
 
     def test_create_user_without_email_fails(
         self,
@@ -192,9 +187,7 @@ class PublicUserApiTests(APITestCase):
             "email",
             response.data,
         )
-        self.assertFalse(
-            get_user_model().objects.exists()
-        )
+        self.assertFalse(get_user_model().objects.exists())
 
     def test_create_user_without_password_fails(
         self,
@@ -215,9 +208,7 @@ class PublicUserApiTests(APITestCase):
             "password",
             response.data,
         )
-        self.assertFalse(
-            get_user_model().objects.exists()
-        )
+        self.assertFalse(get_user_model().objects.exists())
 
     def test_create_user_cannot_set_staff_status(
         self,
@@ -489,11 +480,7 @@ class UnauthenticatedManageUserApiTests(
             self.user,
         )
 
-        self.client.credentials(
-            HTTP_AUTHORIZATION=(
-                f"Bearer {access_token}"
-            )
-        )
+        self.client.credentials(HTTP_AUTHORIZATION=(f"Bearer {access_token}"))
 
         response = self.client.get(
             MANAGE_USER_URL,
@@ -507,11 +494,7 @@ class UnauthenticatedManageUserApiTests(
     def test_invalid_authorize_token_is_rejected(
         self,
     ) -> None:
-        self.client.credentials(
-            HTTP_AUTHORIZE=(
-                "Bearer invalid-token"
-            )
-        )
+        self.client.credentials(HTTP_AUTHORIZE=("Bearer invalid-token"))
 
         response = self.client.get(
             MANAGE_USER_URL,
@@ -550,11 +533,7 @@ class AuthenticatedManageUserApiTests(
         self.user = create_user()
         access_token = get_access_token(self.user)
 
-        self.client.credentials(
-            HTTP_AUTHORIZE=(
-                f"Bearer {access_token}"
-            )
-        )
+        self.client.credentials(HTTP_AUTHORIZE=(f"Bearer {access_token}"))
 
     def test_retrieve_current_user(self) -> None:
         response = self.client.get(MANAGE_USER_URL)
@@ -642,11 +621,7 @@ class AuthenticatedManageUserApiTests(
             self.user.email,
             "updated@example.com",
         )
-        self.assertTrue(
-            self.user.check_password(
-                "updated-password"
-            )
-        )
+        self.assertTrue(self.user.check_password("updated-password"))
 
     def test_update_password(self) -> None:
         response = self.client.patch(
@@ -668,16 +643,8 @@ class AuthenticatedManageUserApiTests(
 
         self.user.refresh_from_db()
 
-        self.assertFalse(
-            self.user.check_password(
-                "test-password"
-            )
-        )
-        self.assertTrue(
-            self.user.check_password(
-                "new-password"
-            )
-        )
+        self.assertFalse(self.user.check_password("test-password"))
+        self.assertTrue(self.user.check_password("new-password"))
 
     def test_update_with_short_password_fails(
         self,
@@ -701,11 +668,7 @@ class AuthenticatedManageUserApiTests(
 
         self.user.refresh_from_db()
 
-        self.assertTrue(
-            self.user.check_password(
-                "test-password"
-            )
-        )
+        self.assertTrue(self.user.check_password("test-password"))
 
     def test_update_with_duplicate_email_fails(
         self,

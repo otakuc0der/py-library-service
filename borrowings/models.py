@@ -33,27 +33,15 @@ class Borrowing(models.Model):
         ordering = ["-borrow_date", "-id"]
         constraints = [
             models.CheckConstraint(
-                condition=Q(
-                    expected_return_date__gte=F(
-                        "borrow_date"
-                    )
-                ),
-                name=(
-                    "expected_return_not_before_borrow"
-                ),
+                condition=Q(expected_return_date__gte=F("borrow_date")),
+                name=("expected_return_not_before_borrow"),
             ),
             models.CheckConstraint(
                 condition=(
                     Q(actual_return_date__isnull=True)
-                    | Q(
-                        actual_return_date__gte=F(
-                            "borrow_date"
-                        )
-                    )
+                    | Q(actual_return_date__gte=F("borrow_date"))
                 ),
-                name=(
-                    "actual_return_not_before_borrow"
-                ),
+                name=("actual_return_not_before_borrow"),
             ),
         ]
 
@@ -70,7 +58,4 @@ class Borrowing(models.Model):
             raise ValidationError(errors)
 
     def __str__(self) -> str:
-        return (
-            f"{self.user} borrowed "
-            f"{self.book}"
-        )
+        return f"{self.user} borrowed " f"{self.book}"

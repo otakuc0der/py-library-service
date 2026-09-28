@@ -120,8 +120,7 @@ class PaymentNotificationFormattingTests(TestCase):
             self.assertIn(result_actual_return_date, fine_payment_msg)
 
         overdue_days = (
-            self.borrowing.actual_return_date
-            - self.borrowing.expected_return_date
+            self.borrowing.actual_return_date - self.borrowing.expected_return_date
         ).days
 
         with self.subTest("test appropriate overdue amount presence"):
@@ -158,9 +157,7 @@ class PaymentNotificationFormattingTests(TestCase):
             ValueError,
             "A fine payment requires a returned borrowing.",
         ):
-            format_fine_payment_completed_message(
-                payment=self.fine_payment
-            )
+            format_fine_payment_completed_message(payment=self.fine_payment)
 
     @patch("notifications.bot.format_payment_completed_message")
     def test_payment_notification_uses_regular_formatter_for_payment(
@@ -169,9 +166,7 @@ class PaymentNotificationFormattingTests(TestCase):
     ) -> None:
         mocked_formatter.return_value = "regular payment message"
 
-        message = format_payment_notification_message(
-            self.regular_payment
-        )
+        message = format_payment_notification_message(self.regular_payment)
 
         self.assertEqual(mocked_formatter.return_value, message)
 
@@ -184,9 +179,7 @@ class PaymentNotificationFormattingTests(TestCase):
     ) -> None:
         mocked_formatter.return_value = "fine payment message"
 
-        message = format_payment_notification_message(
-            self.fine_payment
-        )
+        message = format_payment_notification_message(self.fine_payment)
 
         self.assertEqual(mocked_formatter.return_value, message)
 
@@ -243,9 +236,7 @@ class OverdueBorrowingsReportTests(SimpleTestCase):
         await send_overdue_borrowings_report([])
 
         mocked_formatter.assert_called_once_with()
-        mocked_send_message.assert_awaited_once_with(
-            "No overdue borrowings"
-        )
+        mocked_send_message.assert_awaited_once_with("No overdue borrowings")
 
     async def test_report_sends_started_borrowing_and_completed_messages(
         self,
@@ -280,7 +271,7 @@ class OverdueBorrowingsReportTests(SimpleTestCase):
                 [
                     call(mocked_started_formatter.return_value),
                     call(mocked_borrowing_formatter.return_value),
-                    call(mocked_completed_formatter.return_value)
+                    call(mocked_completed_formatter.return_value),
                 ]
             )
 
@@ -302,7 +293,7 @@ class OverdueBorrowingsReportTests(SimpleTestCase):
                 side_effect=[
                     "First overdue borrowing",
                     "Second overdue borrowing",
-                ]
+                ],
             ) as mocked_borrowing_formatter,
             patch(
                 "notifications.bot.format_overdue_report_completed_message",
@@ -313,9 +304,7 @@ class OverdueBorrowingsReportTests(SimpleTestCase):
                 new_callable=AsyncMock,
             ) as mocked_send_message,
         ):
-            await send_overdue_borrowings_report(
-                [first_borrowing, second_borrowing]
-            )
+            await send_overdue_borrowings_report([first_borrowing, second_borrowing])
 
             mocked_started_formatter.assert_called_once_with(2)
             self.assertEqual(

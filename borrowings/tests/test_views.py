@@ -17,10 +17,7 @@ from borrowings.serializers import (
     BorrowingDetailSerializer,
 )
 
-
-BORROWING_LIST_URL = reverse(
-    "borrowings:borrowing-list"
-)
+BORROWING_LIST_URL = reverse("borrowings:borrowing-list")
 
 
 def get_borrowing_detail_url(borrowing_id: int) -> str:
@@ -65,10 +62,7 @@ class BorrowingViewTestBase(APITestCase):
     ) -> Borrowing:
         data = {
             "borrow_date": timezone.localdate(),
-            "expected_return_date": (
-                timezone.localdate()
-                + timedelta(days=7)
-            ),
+            "expected_return_date": (timezone.localdate() + timedelta(days=7)),
             "actual_return_date": None,
             "user": user,
             "book": book,
@@ -84,8 +78,7 @@ class BorrowingViewTestBase(APITestCase):
     ) -> dict:
         data = {
             "expected_return_date": (
-                timezone.localdate()
-                + timedelta(days=7)
+                timezone.localdate() + timedelta(days=7)
             ).isoformat(),
             "book": selected_book.id,
         }
@@ -97,22 +90,14 @@ class BorrowingViewTestBase(APITestCase):
         self,
         user: AbstractBaseUser,
     ) -> None:
-        token = RefreshToken.for_user(
-            user
-        ).access_token
+        token = RefreshToken.for_user(user).access_token
 
-        self.client.credentials(
-            HTTP_AUTHORIZE=f"Bearer {token}"
-        )
+        self.client.credentials(HTTP_AUTHORIZE=f"Bearer {token}")
 
 
-class UnauthenticatedBorrowingViewTests(
-    BorrowingViewTestBase
-):
+class UnauthenticatedBorrowingViewTests(BorrowingViewTestBase):
     def setUp(self) -> None:
-        self.user = self.create_user(
-            "user@example.com"
-        )
+        self.user = self.create_user("user@example.com")
         self.book = self.create_book()
         self.borrowing = self.create_borrowing(
             self.user,
@@ -120,9 +105,7 @@ class UnauthenticatedBorrowingViewTests(
         )
 
     def test_cannot_get_list(self) -> None:
-        response = self.client.get(
-            BORROWING_LIST_URL
-        )
+        response = self.client.get(BORROWING_LIST_URL)
 
         self.assertEqual(
             response.status_code,
@@ -130,11 +113,7 @@ class UnauthenticatedBorrowingViewTests(
         )
 
     def test_cannot_get_detail(self) -> None:
-        response = self.client.get(
-            get_borrowing_detail_url(
-                self.borrowing.id
-            )
-        )
+        response = self.client.get(get_borrowing_detail_url(self.borrowing.id))
 
         self.assertEqual(
             response.status_code,
@@ -144,9 +123,7 @@ class UnauthenticatedBorrowingViewTests(
     def test_cannot_create_borrowing(self) -> None:
         response = self.client.post(
             BORROWING_LIST_URL,
-            data=self.get_create_data(
-                self.book
-            ),
+            data=self.get_create_data(self.book),
             format="json",
         )
 
@@ -156,16 +133,10 @@ class UnauthenticatedBorrowingViewTests(
         )
 
 
-class AuthenticatedBorrowingViewTests(
-    BorrowingViewTestBase
-):
+class AuthenticatedBorrowingViewTests(BorrowingViewTestBase):
     def setUp(self) -> None:
-        self.user = self.create_user(
-            "user@example.com"
-        )
-        self.other_user = self.create_user(
-            "other@example.com"
-        )
+        self.user = self.create_user("user@example.com")
+        self.other_user = self.create_user("other@example.com")
         self.book = self.create_book()
         self.other_book = self.create_book(
             title="Clean Code",
@@ -176,21 +147,15 @@ class AuthenticatedBorrowingViewTests(
             self.user,
             self.book,
         )
-        self.other_borrowing = (
-            self.create_borrowing(
-                self.other_user,
-                self.other_book,
-            )
+        self.other_borrowing = self.create_borrowing(
+            self.other_user,
+            self.other_book,
         )
 
         self.authenticate_user(self.user)
 
-    def test_list_returns_brief_book_and_user(
-        self
-    ) -> None:
-        response = self.client.get(
-            BORROWING_LIST_URL
-        )
+    def test_list_returns_brief_book_and_user(self) -> None:
+        response = self.client.get(BORROWING_LIST_URL)
 
         self.assertEqual(
             response.status_code,
@@ -212,12 +177,8 @@ class AuthenticatedBorrowingViewTests(
             },
         )
 
-    def test_user_sees_only_own_borrowings(
-        self
-    ) -> None:
-        response = self.client.get(
-            BORROWING_LIST_URL
-        )
+    def test_user_sees_only_own_borrowings(self) -> None:
+        response = self.client.get(BORROWING_LIST_URL)
 
         self.assertEqual(
             len(response.data),
@@ -228,19 +189,9 @@ class AuthenticatedBorrowingViewTests(
             self.borrowing.id,
         )
 
-    def test_user_can_retrieve_own_borrowing(
-        self
-    ) -> None:
-        response = self.client.get(
-            get_borrowing_detail_url(
-                self.borrowing.id
-            )
-        )
-        expected_data = (
-            BorrowingDetailSerializer(
-                self.borrowing
-            ).data
-        )
+    def test_user_can_retrieve_own_borrowing(self) -> None:
+        response = self.client.get(get_borrowing_detail_url(self.borrowing.id))
+        expected_data = BorrowingDetailSerializer(self.borrowing).data
 
         self.assertEqual(
             response.status_code,
@@ -252,11 +203,7 @@ class AuthenticatedBorrowingViewTests(
         )
 
     def test_detail_returns_full_book(self) -> None:
-        response = self.client.get(
-            get_borrowing_detail_url(
-                self.borrowing.id
-            )
-        )
+        response = self.client.get(get_borrowing_detail_url(self.borrowing.id))
 
         self.assertEqual(
             set(response.data["book"]),
@@ -270,23 +217,15 @@ class AuthenticatedBorrowingViewTests(
             },
         )
 
-    def test_user_cannot_retrieve_other_borrowing(
-        self
-    ) -> None:
-        response = self.client.get(
-            get_borrowing_detail_url(
-                self.other_borrowing.id
-            )
-        )
+    def test_user_cannot_retrieve_other_borrowing(self) -> None:
+        response = self.client.get(get_borrowing_detail_url(self.other_borrowing.id))
 
         self.assertEqual(
             response.status_code,
             status.HTTP_404_NOT_FOUND,
         )
 
-    @patch(
-        "borrowings.views.send_new_borrowing_notification.delay"
-    )
+    @patch("borrowings.views.send_new_borrowing_notification.delay")
     def test_user_can_create_borrowing(
         self,
         mock_send_new_borrowing_notification_delay,
@@ -295,9 +234,7 @@ class AuthenticatedBorrowingViewTests(
 
         response = self.client.post(
             BORROWING_LIST_URL,
-            data=self.get_create_data(
-                self.book
-            ),
+            data=self.get_create_data(self.book),
             format="json",
         )
 
@@ -310,26 +247,20 @@ class AuthenticatedBorrowingViewTests(
             initial_count + 1,
         )
 
-        borrowing = Borrowing.objects.get(
-            id=response.data["id"]
-        )
+        borrowing = Borrowing.objects.get(id=response.data["id"])
         self.assertEqual(
             borrowing.user,
             self.user,
         )
 
-    @patch(
-        "borrowings.views.send_new_borrowing_notification.delay"
-    )
+    @patch("borrowings.views.send_new_borrowing_notification.delay")
     def test_create_returns_detail_representation(
         self,
         mock_send_new_borrowing_notification_delay,
     ) -> None:
         response = self.client.post(
             BORROWING_LIST_URL,
-            data=self.get_create_data(
-                self.book
-            ),
+            data=self.get_create_data(self.book),
             format="json",
         )
 
@@ -358,12 +289,8 @@ class AuthenticatedBorrowingViewTests(
 
     def test_update_is_not_allowed(self) -> None:
         response = self.client.put(
-            get_borrowing_detail_url(
-                self.borrowing.id
-            ),
-            data=self.get_create_data(
-                self.book
-            ),
+            get_borrowing_detail_url(self.borrowing.id),
+            data=self.get_create_data(self.book),
             format="json",
         )
 
@@ -374,13 +301,9 @@ class AuthenticatedBorrowingViewTests(
 
     def test_partial_update_is_not_allowed(self) -> None:
         response = self.client.patch(
-            get_borrowing_detail_url(
-                self.borrowing.id
-            ),
+            get_borrowing_detail_url(self.borrowing.id),
             data={
-                "actual_return_date": (
-                    timezone.localdate().isoformat()
-                ),
+                "actual_return_date": (timezone.localdate().isoformat()),
             },
             format="json",
         )
@@ -391,11 +314,7 @@ class AuthenticatedBorrowingViewTests(
         )
 
     def test_delete_is_not_allowed(self) -> None:
-        response = self.client.delete(
-            get_borrowing_detail_url(
-                self.borrowing.id
-            )
-        )
+        response = self.client.delete(get_borrowing_detail_url(self.borrowing.id))
 
         self.assertEqual(
             response.status_code,
@@ -403,17 +322,13 @@ class AuthenticatedBorrowingViewTests(
         )
 
 
-class AdminBorrowingViewTests(
-    BorrowingViewTestBase
-):
+class AdminBorrowingViewTests(BorrowingViewTestBase):
     def setUp(self) -> None:
         self.admin = self.create_user(
             "admin@example.com",
             is_staff=True,
         )
-        self.user = self.create_user(
-            "user@example.com"
-        )
+        self.user = self.create_user("user@example.com")
         self.book = self.create_book()
         self.borrowing = self.create_borrowing(
             self.user,
@@ -422,12 +337,8 @@ class AdminBorrowingViewTests(
 
         self.authenticate_user(self.admin)
 
-    def test_admin_sees_all_borrowings(
-        self
-    ) -> None:
-        response = self.client.get(
-            BORROWING_LIST_URL
-        )
+    def test_admin_sees_all_borrowings(self) -> None:
+        response = self.client.get(BORROWING_LIST_URL)
 
         self.assertEqual(
             response.status_code,
@@ -438,14 +349,8 @@ class AdminBorrowingViewTests(
             self.borrowing.id,
         )
 
-    def test_admin_can_retrieve_any_borrowing(
-        self
-    ) -> None:
-        response = self.client.get(
-            get_borrowing_detail_url(
-                self.borrowing.id
-            )
-        )
+    def test_admin_can_retrieve_any_borrowing(self) -> None:
+        response = self.client.get(get_borrowing_detail_url(self.borrowing.id))
 
         self.assertEqual(
             response.status_code,

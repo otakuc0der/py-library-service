@@ -7,7 +7,6 @@ from users.views import (
     MyTokenRefreshView,
 )
 
-
 app_name = "users"
 
 urlpatterns = [

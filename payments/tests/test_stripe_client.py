@@ -24,6 +24,4 @@ class StripeClientTests(SimpleTestCase):
             result,
             expected_client,
         )
-        mocked_stripe_client_class.assert_called_once_with(
-            "sk_test_secret"
-        )
+        mocked_stripe_client_class.assert_called_once_with("sk_test_secret")

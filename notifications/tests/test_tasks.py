@@ -46,137 +46,91 @@ class NotificationTasksTests(TestCase):
             borrowing=self.borrowing,
             status=Payment.Status.PAID,
             type=Payment.Type.PAYMENT,
-            session_url=(
-                "https://checkout.stripe.com/"
-                "test-payment"
-            ),
+            session_url=("https://checkout.stripe.com/" "test-payment"),
             session_id="cs_test_payment",
             money_to_pay=Decimal("20.00"),
         )
 
     @patch("notifications.tasks.async_to_sync")
-    @patch(
-        "notifications.tasks."
-        "format_new_borrowing_message"
-    )
+    @patch("notifications.tasks." "format_new_borrowing_message")
     def test_send_new_borrowing_notification_formats_and_sends_message(
         self,
         mocked_formatter: MagicMock,
         mocked_async_to_sync: MagicMock,
     ) -> None:
-        mocked_formatter.return_value = (
-            "New borrowing message"
-        )
+        mocked_formatter.return_value = "New borrowing message"
 
         mocked_sync_sender = MagicMock()
-        mocked_async_to_sync.return_value = (
-            mocked_sync_sender
-        )
+        mocked_async_to_sync.return_value = mocked_sync_sender
 
-        send_new_borrowing_notification.run(
-            self.borrowing.id
-        )
+        send_new_borrowing_notification.run(self.borrowing.id)
 
         mocked_formatter.assert_called_once()
 
-        formatted_borrowing = (
-            mocked_formatter.call_args.args[0]
-        )
+        formatted_borrowing = mocked_formatter.call_args.args[0]
 
         self.assertEqual(
             formatted_borrowing.id,
             self.borrowing.id,
         )
 
-        mocked_async_to_sync.assert_called_once_with(
-            send_telegram_message
-        )
-        mocked_sync_sender.assert_called_once_with(
-            "New borrowing message"
-        )
+        mocked_async_to_sync.assert_called_once_with(send_telegram_message)
+        mocked_sync_sender.assert_called_once_with("New borrowing message")
 
     @patch("notifications.tasks.async_to_sync")
-    @patch(
-        "notifications.tasks."
-        "format_payment_notification_message"
-    )
+    @patch("notifications.tasks." "format_payment_notification_message")
     def test_send_payment_completed_notification_formats_and_sends_message(
         self,
         mocked_formatter: MagicMock,
         mocked_async_to_sync: MagicMock,
     ) -> None:
-        mocked_formatter.return_value = (
-            "Payment completed message"
-        )
+        mocked_formatter.return_value = "Payment completed message"
 
         mocked_sync_sender = MagicMock()
-        mocked_async_to_sync.return_value = (
-            mocked_sync_sender
-        )
+        mocked_async_to_sync.return_value = mocked_sync_sender
 
-        send_payment_completed_notification.run(
-            self.payment.id
-        )
+        send_payment_completed_notification.run(self.payment.id)
 
         mocked_formatter.assert_called_once()
 
-        formatted_payment = (
-            mocked_formatter.call_args.args[0]
-        )
+        formatted_payment = mocked_formatter.call_args.args[0]
 
         self.assertEqual(
             formatted_payment.id,
             self.payment.id,
         )
 
-        mocked_async_to_sync.assert_called_once_with(
-            send_telegram_message
-        )
-        mocked_sync_sender.assert_called_once_with(
-            "Payment completed message"
-        )
+        mocked_async_to_sync.assert_called_once_with(send_telegram_message)
+        mocked_sync_sender.assert_called_once_with("Payment completed message")
 
     @patch("notifications.tasks.async_to_sync")
-    @patch(
-        "notifications.tasks.get_overdue_borrowings"
-    )
+    @patch("notifications.tasks.get_overdue_borrowings")
     def test_check_overdue_borrowings_sends_returned_queryset_as_list(
         self,
         mocked_get_overdue: MagicMock,
         mocked_async_to_sync: MagicMock,
     ) -> None:
-        mocked_get_overdue.return_value = (
-            Borrowing.objects.filter(
-                id=self.borrowing.id,
-            )
+        mocked_get_overdue.return_value = Borrowing.objects.filter(
+            id=self.borrowing.id,
         )
 
         mocked_sync_report_sender = MagicMock()
-        mocked_async_to_sync.return_value = (
-            mocked_sync_report_sender
-        )
+        mocked_async_to_sync.return_value = mocked_sync_report_sender
 
         check_overdue_borrowings.run()
 
         mocked_get_overdue.assert_called_once_with()
-        mocked_async_to_sync.assert_called_once_with(
-            send_overdue_borrowings_report
-        )
+        mocked_async_to_sync.assert_called_once_with(send_overdue_borrowings_report)
 
         mocked_sync_report_sender.assert_called_once()
 
-        passed_borrowings = (
-            mocked_sync_report_sender.call_args.args[0]
-        )
+        passed_borrowings = mocked_sync_report_sender.call_args.args[0]
 
         self.assertIsInstance(
             passed_borrowings,
             list,
         )
         self.assertEqual(
-            [
-                borrowing.id
-                for borrowing in passed_borrowings
-            ],
+            [borrowing.id for borrowing in passed_borrowings],
             [self.borrowing.id],
         )

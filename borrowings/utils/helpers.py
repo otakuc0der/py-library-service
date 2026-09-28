@@ -8,9 +8,7 @@ def get_overdue_borrowings() -> QuerySet[Borrowing]:
     today = timezone.localdate()
 
     return (
-        Borrowing
-        .objects
-        .select_related(
+        Borrowing.objects.select_related(
             "book",
             "user",
         )

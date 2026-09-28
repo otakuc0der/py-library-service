@@ -59,15 +59,11 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
     ) -> date:
         errors = get_borrowing_date_errors(
             borrow_date=timezone.localdate(),
-            expected_return_date=(
-                expected_return_date
-            ),
+            expected_return_date=(expected_return_date),
         )
 
         if errors:
-            raise serializers.ValidationError(
-                errors["expected_return_date"]
-            )
+            raise serializers.ValidationError(errors["expected_return_date"])
 
         return expected_return_date
 
@@ -75,9 +71,7 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
         self,
         book: Book,
     ) -> Book:
-        error = validate_book_inventory(
-            inventory=book.inventory
-        )
+        error = validate_book_inventory(inventory=book.inventory)
 
         if error:
             raise serializers.ValidationError(error)
@@ -88,19 +82,12 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
         self,
         validated_data: dict[str, Any],
     ) -> Borrowing:
-        selected_book = validated_data.pop(
-            "book"
-        )
+        selected_book = validated_data.pop("book")
 
         with transaction.atomic():
-            locked_book = (
-                Book.objects.select_for_update()
-                .get(pk=selected_book.pk)
-            )
+            locked_book = Book.objects.select_for_update().get(pk=selected_book.pk)
 
-            inventory_error = validate_book_inventory(
-                inventory=locked_book.inventory
-            )
+            inventory_error = validate_book_inventory(inventory=locked_book.inventory)
 
             if inventory_error:
                 raise serializers.ValidationError(

@@ -13,11 +13,9 @@ from borrowings.models import Borrowing
 
 class BorrowingModelTests(TestCase):
     def setUp(self) -> None:
-        self.user = (
-            get_user_model().objects.create_user(
-                email="user@example.com",
-                password="test-password",
-            )
+        self.user = get_user_model().objects.create_user(
+            email="user@example.com",
+            password="test-password",
         )
         self.book = Book.objects.create(
             title="The Little Prince",
@@ -35,9 +33,7 @@ class BorrowingModelTests(TestCase):
 
         borrowing_data = {
             "borrow_date": borrow_date,
-            "expected_return_date": (
-                borrow_date + timedelta(days=7)
-            ),
+            "expected_return_date": (borrow_date + timedelta(days=7)),
             "actual_return_date": None,
             "book": self.book,
             "user": self.user,
@@ -49,9 +45,7 @@ class BorrowingModelTests(TestCase):
     def test_create_borrowing_with_correct_data(self) -> None:
         borrowing_data = self.get_borrowing_data()
 
-        borrowing = Borrowing.objects.create(
-            **borrowing_data
-        )
+        borrowing = Borrowing.objects.create(**borrowing_data)
 
         self.assertEqual(
             borrowing.borrow_date,
@@ -59,13 +53,9 @@ class BorrowingModelTests(TestCase):
         )
         self.assertEqual(
             borrowing.expected_return_date,
-            borrowing_data[
-                "expected_return_date"
-            ],
+            borrowing_data["expected_return_date"],
         )
-        self.assertIsNone(
-            borrowing.actual_return_date
-        )
+        self.assertIsNone(borrowing.actual_return_date)
         self.assertEqual(
             borrowing.book,
             self.book,
@@ -77,10 +67,7 @@ class BorrowingModelTests(TestCase):
 
     def test_borrow_date_is_filled_automatically(self) -> None:
         borrowing = Borrowing.objects.create(
-            expected_return_date=(
-                timezone.localdate()
-                + timedelta(days=7)
-            ),
+            expected_return_date=(timezone.localdate() + timedelta(days=7)),
             book=self.book,
             user=self.user,
         )
@@ -97,9 +84,7 @@ class BorrowingModelTests(TestCase):
             )
         )
 
-        self.assertIsNone(
-            borrowing.actual_return_date
-        )
+        self.assertIsNone(borrowing.actual_return_date)
 
     def test_expected_return_date_can_equal_borrow_date(self) -> None:
         borrow_date = timezone.localdate()
@@ -119,15 +104,11 @@ class BorrowingModelTests(TestCase):
         borrowing = Borrowing(
             **self.get_borrowing_data(
                 borrow_date=borrow_date,
-                expected_return_date=(
-                    borrow_date - timedelta(days=1)
-                ),
+                expected_return_date=(borrow_date - timedelta(days=1)),
             )
         )
 
-        with self.assertRaises(
-            ValidationError
-        ) as error:
+        with self.assertRaises(ValidationError) as error:
             borrowing.full_clean()
 
         self.assertIn(
@@ -142,15 +123,11 @@ class BorrowingModelTests(TestCase):
         borrowing = Borrowing(
             **self.get_borrowing_data(
                 borrow_date=borrow_date,
-                actual_return_date=(
-                    borrow_date - timedelta(days=1)
-                ),
+                actual_return_date=(borrow_date - timedelta(days=1)),
             )
         )
 
-        with self.assertRaises(
-            ValidationError
-        ) as error:
+        with self.assertRaises(ValidationError) as error:
             borrowing.full_clean()
 
         self.assertIn(
@@ -162,70 +139,44 @@ class BorrowingModelTests(TestCase):
         self,
     ) -> None:
         borrow_date = timezone.localdate()
-        expected_return_date = (
-            borrow_date + timedelta(days=7)
-        )
+        expected_return_date = borrow_date + timedelta(days=7)
         borrowing = Borrowing(
             **self.get_borrowing_data(
                 borrow_date=borrow_date,
-                expected_return_date=(
-                    expected_return_date
-                ),
-                actual_return_date=(
-                    expected_return_date
-                    + timedelta(days=3)
-                ),
+                expected_return_date=(expected_return_date),
+                actual_return_date=(expected_return_date + timedelta(days=3)),
             )
         )
 
         borrowing.full_clean()
 
     def test_str_returns_user_and_book(self) -> None:
-        borrowing = Borrowing.objects.create(
-            **self.get_borrowing_data()
-        )
+        borrowing = Borrowing.objects.create(**self.get_borrowing_data())
 
         self.assertEqual(
             str(borrowing),
-            (
-                f"{self.user} borrowed "
-                f"{self.book}"
-            ),
+            (f"{self.user} borrowed " f"{self.book}"),
         )
 
     def test_borrowings_are_ordered_by_date_and_id(self) -> None:
         today = timezone.localdate()
 
-        oldest_borrowing = (
-            Borrowing.objects.create(
-                **self.get_borrowing_data(
-                    borrow_date=(
-                        today - timedelta(days=2)
-                    ),
-                    expected_return_date=(
-                        today + timedelta(days=5)
-                    ),
-                )
+        oldest_borrowing = Borrowing.objects.create(
+            **self.get_borrowing_data(
+                borrow_date=(today - timedelta(days=2)),
+                expected_return_date=(today + timedelta(days=5)),
             )
         )
-        first_newest_borrowing = (
-            Borrowing.objects.create(
-                **self.get_borrowing_data(
-                    borrow_date=today,
-                    expected_return_date=(
-                        today + timedelta(days=7)
-                    ),
-                )
+        first_newest_borrowing = Borrowing.objects.create(
+            **self.get_borrowing_data(
+                borrow_date=today,
+                expected_return_date=(today + timedelta(days=7)),
             )
         )
-        second_newest_borrowing = (
-            Borrowing.objects.create(
-                **self.get_borrowing_data(
-                    borrow_date=today,
-                    expected_return_date=(
-                        today + timedelta(days=10)
-                    ),
-                )
+        second_newest_borrowing = Borrowing.objects.create(
+            **self.get_borrowing_data(
+                borrow_date=today,
+                expected_return_date=(today + timedelta(days=10)),
             )
         )
 
@@ -239,9 +190,7 @@ class BorrowingModelTests(TestCase):
         )
 
     def test_borrowing_is_connected_to_book(self) -> None:
-        borrowing = Borrowing.objects.create(
-            **self.get_borrowing_data()
-        )
+        borrowing = Borrowing.objects.create(**self.get_borrowing_data())
 
         self.assertEqual(
             borrowing.book,
@@ -253,9 +202,7 @@ class BorrowingModelTests(TestCase):
         )
 
     def test_borrowing_is_connected_to_user(self) -> None:
-        borrowing = Borrowing.objects.create(
-            **self.get_borrowing_data()
-        )
+        borrowing = Borrowing.objects.create(**self.get_borrowing_data())
 
         self.assertEqual(
             borrowing.user,
@@ -276,10 +223,7 @@ class BorrowingModelTests(TestCase):
                 Borrowing.objects.create(
                     **self.get_borrowing_data(
                         borrow_date=borrow_date,
-                        expected_return_date=(
-                            borrow_date
-                            - timedelta(days=1)
-                        ),
+                        expected_return_date=(borrow_date - timedelta(days=1)),
                     )
                 )
 
@@ -293,13 +237,7 @@ class BorrowingModelTests(TestCase):
                 Borrowing.objects.create(
                     **self.get_borrowing_data(
                         borrow_date=borrow_date,
-                        expected_return_date=(
-                            borrow_date
-                            + timedelta(days=7)
-                        ),
-                        actual_return_date=(
-                            borrow_date
-                            - timedelta(days=1)
-                        ),
+                        expected_return_date=(borrow_date + timedelta(days=7)),
+                        actual_return_date=(borrow_date - timedelta(days=1)),
                     )
                 )

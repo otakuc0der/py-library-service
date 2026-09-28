@@ -22,17 +22,13 @@ class PaymentViewSetTests(APITestCase):
             email="user@example.com",
             password="test-password",
         )
-        cls.another_user = (
-            get_user_model().objects.create_user(
-                email="another@example.com",
-                password="test-password",
-            )
+        cls.another_user = get_user_model().objects.create_user(
+            email="another@example.com",
+            password="test-password",
         )
-        cls.admin = (
-            get_user_model().objects.create_superuser(
-                email="admin@example.com",
-                password="admin-password",
-            )
+        cls.admin = get_user_model().objects.create_superuser(
+            email="admin@example.com",
+            password="admin-password",
         )
 
         cls.book = Book.objects.create(
@@ -46,47 +42,29 @@ class PaymentViewSetTests(APITestCase):
         cls.user_borrowing = Borrowing.objects.create(
             user=cls.user,
             book=cls.book,
-            expected_return_date=(
-                timezone.localdate()
-                + timedelta(days=7)
-            ),
+            expected_return_date=(timezone.localdate() + timedelta(days=7)),
         )
-        cls.another_user_borrowing = (
-            Borrowing.objects.create(
-                user=cls.another_user,
-                book=cls.book,
-                expected_return_date=(
-                    timezone.localdate()
-                    + timedelta(days=10)
-                ),
-            )
+        cls.another_user_borrowing = Borrowing.objects.create(
+            user=cls.another_user,
+            book=cls.book,
+            expected_return_date=(timezone.localdate() + timedelta(days=10)),
         )
 
         cls.user_payment = Payment.objects.create(
             borrowing=cls.user_borrowing,
             status=Payment.Status.PENDING,
             type=Payment.Type.PAYMENT,
-            session_url=(
-                "https://checkout.stripe.com/"
-                "user-session"
-            ),
+            session_url=("https://checkout.stripe.com/" "user-session"),
             session_id="cs_test_user",
             money_to_pay=Decimal("12.50"),
         )
-        cls.another_user_payment = (
-            Payment.objects.create(
-                borrowing=(
-                    cls.another_user_borrowing
-                ),
-                status=Payment.Status.PAID,
-                type=Payment.Type.FINE,
-                session_url=(
-                    "https://checkout.stripe.com/"
-                    "another-session"
-                ),
-                session_id="cs_test_another",
-                money_to_pay=Decimal("25.00"),
-            )
+        cls.another_user_payment = Payment.objects.create(
+            borrowing=(cls.another_user_borrowing),
+            status=Payment.Status.PAID,
+            type=Payment.Type.FINE,
+            session_url=("https://checkout.stripe.com/" "another-session"),
+            session_id="cs_test_another",
+            money_to_pay=Decimal("25.00"),
         )
 
         cls.list_url = reverse(
@@ -132,10 +110,7 @@ class PaymentViewSetTests(APITestCase):
             status.HTTP_200_OK,
         )
 
-        returned_ids = {
-            payment["id"]
-            for payment in response.data
-        }
+        returned_ids = {payment["id"] for payment in response.data}
 
         self.assertEqual(
             returned_ids,
@@ -194,10 +169,7 @@ class PaymentViewSetTests(APITestCase):
             status.HTTP_200_OK,
         )
 
-        returned_ids = {
-            payment["id"]
-            for payment in response.data
-        }
+        returned_ids = {payment["id"] for payment in response.data}
 
         self.assertEqual(
             returned_ids,
@@ -304,11 +276,9 @@ class PaymentViewSetTests(APITestCase):
 class CheckoutResultViewTests(APITestCase):
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.user = (
-            get_user_model().objects.create_user(
-                email="checkout@example.com",
-                password="test-password",
-            )
+        cls.user = get_user_model().objects.create_user(
+            email="checkout@example.com",
+            password="test-password",
         )
 
         cls.book = Book.objects.create(
@@ -322,20 +292,14 @@ class CheckoutResultViewTests(APITestCase):
         cls.borrowing = Borrowing.objects.create(
             user=cls.user,
             book=cls.book,
-            expected_return_date=(
-                timezone.localdate()
-                + timedelta(days=7)
-            ),
+            expected_return_date=(timezone.localdate() + timedelta(days=7)),
         )
 
         cls.pending_payment = Payment.objects.create(
             borrowing=cls.borrowing,
             status=Payment.Status.PENDING,
             type=Payment.Type.PAYMENT,
-            session_url=(
-                "https://checkout.stripe.com/"
-                "pending"
-            ),
+            session_url=("https://checkout.stripe.com/" "pending"),
             session_id="cs_test_pending",
             money_to_pay=Decimal("14.00"),
         )
@@ -344,20 +308,13 @@ class CheckoutResultViewTests(APITestCase):
             borrowing=cls.borrowing,
             status=Payment.Status.PAID,
             type=Payment.Type.PAYMENT,
-            session_url=(
-                "https://checkout.stripe.com/"
-                "paid"
-            ),
+            session_url=("https://checkout.stripe.com/" "paid"),
             session_id="cs_test_paid",
             money_to_pay=Decimal("14.00"),
         )
 
-        cls.success_url = reverse(
-            "payments:checkout-success"
-        )
-        cls.cancel_url = reverse(
-            "payments:checkout-cancel"
-        )
+        cls.success_url = reverse("payments:checkout-success")
+        cls.cancel_url = reverse("payments:checkout-cancel")
 
     def test_checkout_success_requires_session_id(
         self,
@@ -370,12 +327,7 @@ class CheckoutResultViewTests(APITestCase):
         )
         self.assertEqual(
             response.data,
-            {
-                "message": (
-                    "The payment session ID "
-                    "is missing."
-                )
-            },
+            {"message": ("The payment session ID " "is missing.")},
         )
 
     def test_checkout_success_returns_not_found_for_unknown_session(
@@ -384,9 +336,7 @@ class CheckoutResultViewTests(APITestCase):
         response = self.client.get(
             self.success_url,
             {
-                "session_id": (
-                    "cs_test_unknown"
-                ),
+                "session_id": ("cs_test_unknown"),
             },
         )
 
@@ -396,12 +346,7 @@ class CheckoutResultViewTests(APITestCase):
         )
         self.assertEqual(
             response.data,
-            {
-                "message": (
-                    "We could not find a payment "
-                    "for this session."
-                )
-            },
+            {"message": ("We could not find a payment " "for this session.")},
         )
 
     def test_checkout_success_returns_stored_payment_status(
@@ -418,10 +363,7 @@ class CheckoutResultViewTests(APITestCase):
             ),
             (
                 self.paid_payment,
-                (
-                    "Thank you. Your payment "
-                    "has been received."
-                ),
+                ("Thank you. Your payment " "has been received."),
             ),
         ]
 
@@ -430,9 +372,7 @@ class CheckoutResultViewTests(APITestCase):
                 response = self.client.get(
                     self.success_url,
                     {
-                        "session_id": (
-                            payment.session_id
-                        ),
+                        "session_id": (payment.session_id),
                     },
                 )
 
@@ -482,9 +422,7 @@ class CheckoutResultViewTests(APITestCase):
 
 class StripeWebhookTests(APITestCase):
     def setUp(self) -> None:
-        self.webhook_url = reverse(
-            "payments:payment-event-handler"
-        )
+        self.webhook_url = reverse("payments:payment-event-handler")
 
     @staticmethod
     def create_event(
@@ -511,11 +449,7 @@ class StripeWebhookTests(APITestCase):
     ) -> None:
         event, session = self.create_event()
 
-        mocked_construct_event = (
-            mocked_get_stripe_client
-            .return_value
-            .construct_event
-        )
+        mocked_construct_event = mocked_get_stripe_client.return_value.construct_event
         mocked_construct_event.return_value = event
 
         response = self.client.post(
@@ -556,12 +490,9 @@ class StripeWebhookTests(APITestCase):
         mocked_get_stripe_client: MagicMock,
         mocked_mark_as_paid: MagicMock,
     ) -> None:
-        (
-            mocked_get_stripe_client
-            .return_value
-            .construct_event
-            .side_effect
-        ) = ValueError("Invalid payload")
+        mocked_get_stripe_client.return_value.construct_event.side_effect = ValueError(
+            "Invalid payload"
+        )
 
         response = self.client.post(
             self.webhook_url,
@@ -593,18 +524,12 @@ class StripeWebhookTests(APITestCase):
             )[0],
         ]
 
-        mocked_construct_event = (
-            mocked_get_stripe_client
-            .return_value
-            .construct_event
-        )
+        mocked_construct_event = mocked_get_stripe_client.return_value.construct_event
 
         for event in ignored_events:
             with self.subTest(
                 event_type=event.type,
-                payment_status=(
-                    event.data.object.payment_status
-                ),
+                payment_status=(event.data.object.payment_status),
             ):
                 mocked_construct_event.return_value = event
 
@@ -612,9 +537,7 @@ class StripeWebhookTests(APITestCase):
                     self.webhook_url,
                     data={"id": "evt_test"},
                     format="json",
-                    HTTP_STRIPE_SIGNATURE=(
-                        "test-signature"
-                    ),
+                    HTTP_STRIPE_SIGNATURE=("test-signature"),
                 )
 
                 self.assertEqual(
@@ -633,16 +556,9 @@ class StripeWebhookTests(APITestCase):
     ) -> None:
         event, _ = self.create_event()
 
-        (
-            mocked_get_stripe_client
-            .return_value
-            .construct_event
-            .return_value
-        ) = event
+        mocked_get_stripe_client.return_value.construct_event.return_value = event
 
-        mocked_mark_as_paid.side_effect = (
-            Payment.DoesNotExist
-        )
+        mocked_mark_as_paid.side_effect = Payment.DoesNotExist
 
         response = self.client.post(
             self.webhook_url,
@@ -665,20 +581,10 @@ class StripeWebhookTests(APITestCase):
     ) -> None:
         event, _ = self.create_event()
 
-        (
-            mocked_get_stripe_client
-            .return_value
-            .construct_event
-            .return_value
-        ) = event
+        mocked_get_stripe_client.return_value.construct_event.return_value = event
 
-        mocked_mark_as_paid.side_effect = (
-            PaymentSessionMismatchError(
-                (
-                    "Stripe Session does not "
-                    "match the payment."
-                )
-            )
+        mocked_mark_as_paid.side_effect = PaymentSessionMismatchError(
+            ("Stripe Session does not " "match the payment.")
         )
 
         response = self.client.post(

@@ -24,9 +24,7 @@ class UserSerializerTests(TestCase):
             user.email,
             "user@example.com",
         )
-        self.assertTrue(
-            user.check_password("test-password")
-        )
+        self.assertTrue(user.check_password("test-password"))
 
     def test_password_is_not_returned(self) -> None:
         serializer = UserSerializer(
@@ -117,9 +115,5 @@ class UserSerializerTests(TestCase):
 
         updated_user = serializer.save()
 
-        self.assertFalse(
-            updated_user.check_password("old-password")
-        )
-        self.assertTrue(
-            updated_user.check_password("new-password")
-        )
+        self.assertFalse(updated_user.check_password("old-password"))
+        self.assertTrue(updated_user.check_password("new-password"))
