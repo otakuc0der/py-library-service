@@ -8,6 +8,7 @@ from books.serializers import BookSerializer
 
 @extend_schema_view(
     list=extend_schema(
+        tags=["Books"],
         summary="List books",
         description=(
             "Return all books available in the library inventory. "
@@ -15,6 +16,7 @@ from books.serializers import BookSerializer
         ),
     ),
     retrieve=extend_schema(
+        tags=["Books"],
         summary="Retrieve a book",
         description=(
             "Return information about one book by its ID. "
@@ -22,6 +24,7 @@ from books.serializers import BookSerializer
         ),
     ),
     create=extend_schema(
+        tags=["Books"],
         summary="Create a book",
         description=(
             "Create a new book in the library inventory. "
@@ -29,6 +32,7 @@ from books.serializers import BookSerializer
         ),
     ),
     update=extend_schema(
+        tags=["Books"],
         summary="Update a book",
         description=(
             "Replace all editable fields of an existing book. "
@@ -36,6 +40,7 @@ from books.serializers import BookSerializer
         ),
     ),
     partial_update=extend_schema(
+        tags=["Books"],
         summary="Partially update a book",
         description=(
             "Update one or more fields of an existing book. "
@@ -43,6 +48,7 @@ from books.serializers import BookSerializer
         ),
     ),
     destroy=extend_schema(
+        tags=["Books"],
         summary="Delete a book",
         description=(
             "Remove a book from the library inventory. "
