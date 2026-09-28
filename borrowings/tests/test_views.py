@@ -226,8 +226,10 @@ class AuthenticatedBorrowingViewTests(BorrowingViewTestBase):
         )
 
     @patch("borrowings.views.send_new_borrowing_notification.delay")
+    @patch("borrowings.serializers.create_payment_for_borrowing")
     def test_user_can_create_borrowing(
         self,
+        mock_create_payment_for_borrowing,
         mock_send_new_borrowing_notification_delay,
     ) -> None:
         initial_count = Borrowing.objects.count()
@@ -247,15 +249,22 @@ class AuthenticatedBorrowingViewTests(BorrowingViewTestBase):
             initial_count + 1,
         )
 
-        borrowing = Borrowing.objects.get(id=response.data["id"])
+        borrowing = Borrowing.objects.get(
+            id=response.data["id"],
+        )
+
         self.assertEqual(
             borrowing.user,
             self.user,
         )
 
+        mock_create_payment_for_borrowing.assert_called_once()
+
     @patch("borrowings.views.send_new_borrowing_notification.delay")
+    @patch("borrowings.serializers.create_payment_for_borrowing")
     def test_create_returns_detail_representation(
         self,
+        mock_create_payment_for_borrowing,
         mock_send_new_borrowing_notification_delay,
     ) -> None:
         response = self.client.post(
@@ -286,6 +295,8 @@ class AuthenticatedBorrowingViewTests(BorrowingViewTestBase):
                 "email": self.user.email,
             },
         )
+
+        mock_create_payment_for_borrowing.assert_called_once()
 
     def test_update_is_not_allowed(self) -> None:
         response = self.client.put(
