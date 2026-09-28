@@ -41,9 +41,7 @@ class BookModelTests(TestCase):
         )
 
     def test_str_returns_title_and_author(self) -> None:
-        book = Book.objects.create(
-            **self.get_book_data()
-        )
+        book = Book.objects.create(**self.get_book_data())
 
         self.assertEqual(
             str(book),
@@ -51,9 +49,7 @@ class BookModelTests(TestCase):
         )
 
     def test_inventory_can_equal_zero(self) -> None:
-        book = Book.objects.create(
-            **self.get_book_data(inventory=0)
-        )
+        book = Book.objects.create(**self.get_book_data(inventory=0))
 
         self.assertEqual(book.inventory, 0)
 
@@ -89,9 +85,7 @@ class BookModelTests(TestCase):
     def test_negative_inventory_fails_validation(
         self,
     ) -> None:
-        book = Book(
-            **self.get_book_data(inventory=-1)
-        )
+        book = Book(**self.get_book_data(inventory=-1))
 
         with self.assertRaises(ValidationError) as error:
             book.full_clean()
@@ -124,9 +118,7 @@ class BookModelTests(TestCase):
                 )
 
     def test_invalid_cover_fails_validation(self) -> None:
-        book = Book(
-            **self.get_book_data(cover="invalid")
-        )
+        book = Book(**self.get_book_data(cover="invalid"))
 
         with self.assertRaises(ValidationError) as error:
             book.full_clean()

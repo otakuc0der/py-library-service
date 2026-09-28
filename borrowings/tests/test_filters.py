@@ -13,10 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from books.models import Book
 from borrowings.models import Borrowing
 
-
-BORROWING_LIST_URL = reverse(
-    "borrowings:borrowing-list"
-)
+BORROWING_LIST_URL = reverse("borrowings:borrowing-list")
 
 
 class BorrowingFilterTestBase(APITestCase):
@@ -51,10 +48,7 @@ class BorrowingFilterTestBase(APITestCase):
     ) -> Borrowing:
         return Borrowing.objects.create(
             borrow_date=timezone.localdate(),
-            expected_return_date=(
-                timezone.localdate()
-                + timedelta(days=7)
-            ),
+            expected_return_date=(timezone.localdate() + timedelta(days=7)),
             actual_return_date=actual_return_date,
             user=user,
             book=book,
@@ -64,22 +58,13 @@ class BorrowingFilterTestBase(APITestCase):
         self,
         user: AbstractBaseUser,
     ) -> None:
-        access_token = RefreshToken.for_user(
-            user
-        ).access_token
+        access_token = RefreshToken.for_user(user).access_token
 
-        self.client.credentials(
-            HTTP_AUTHORIZE=(
-                f"Bearer {access_token}"
-            )
-        )
+        self.client.credentials(HTTP_AUTHORIZE=(f"Bearer {access_token}"))
 
     @staticmethod
     def get_response_ids(response) -> set[int]:
-        return {
-            borrowing["id"]
-            for borrowing in response.data
-        }
+        return {borrowing["id"] for borrowing in response.data}
 
 
 class UnauthenticatedBorrowingFilterTests(
@@ -112,43 +97,23 @@ class RegularUserBorrowingFilterTests(
             email="other@example.com",
         )
 
-        self.active_borrowing = (
-            self.create_borrowing(
-                user=self.user,
-                book=self.create_book(
-                    "Active User Book"
-                ),
-            )
+        self.active_borrowing = self.create_borrowing(
+            user=self.user,
+            book=self.create_book("Active User Book"),
         )
-        self.returned_borrowing = (
-            self.create_borrowing(
-                user=self.user,
-                book=self.create_book(
-                    "Returned User Book"
-                ),
-                actual_return_date=(
-                    timezone.localdate()
-                ),
-            )
+        self.returned_borrowing = self.create_borrowing(
+            user=self.user,
+            book=self.create_book("Returned User Book"),
+            actual_return_date=(timezone.localdate()),
         )
-        self.other_active_borrowing = (
-            self.create_borrowing(
-                user=self.other_user,
-                book=self.create_book(
-                    "Other Active Book"
-                ),
-            )
+        self.other_active_borrowing = self.create_borrowing(
+            user=self.other_user,
+            book=self.create_book("Other Active Book"),
         )
-        self.other_returned_borrowing = (
-            self.create_borrowing(
-                user=self.other_user,
-                book=self.create_book(
-                    "Other Returned Book"
-                ),
-                actual_return_date=(
-                    timezone.localdate()
-                ),
-            )
+        self.other_returned_borrowing = self.create_borrowing(
+            user=self.other_user,
+            book=self.create_book("Other Returned Book"),
+            actual_return_date=(timezone.localdate()),
         )
 
         self.authenticate_user(self.user)
@@ -156,9 +121,7 @@ class RegularUserBorrowingFilterTests(
     def test_user_sees_only_own_borrowings_without_filters(
         self,
     ) -> None:
-        response = self.client.get(
-            BORROWING_LIST_URL
-        )
+        response = self.client.get(BORROWING_LIST_URL)
 
         self.assertEqual(
             response.status_code,
@@ -277,49 +240,27 @@ class AdminBorrowingFilterTests(
         self.second_user = self.create_user(
             email="second@example.com",
         )
-        self.user_without_borrowings = (
-            self.create_user(
-                email="empty@example.com",
-            )
+        self.user_without_borrowings = self.create_user(
+            email="empty@example.com",
         )
 
-        self.first_active = (
-            self.create_borrowing(
-                user=self.first_user,
-                book=self.create_book(
-                    "First Active Book"
-                ),
-            )
+        self.first_active = self.create_borrowing(
+            user=self.first_user,
+            book=self.create_book("First Active Book"),
         )
-        self.first_returned = (
-            self.create_borrowing(
-                user=self.first_user,
-                book=self.create_book(
-                    "First Returned Book"
-                ),
-                actual_return_date=(
-                    timezone.localdate()
-                ),
-            )
+        self.first_returned = self.create_borrowing(
+            user=self.first_user,
+            book=self.create_book("First Returned Book"),
+            actual_return_date=(timezone.localdate()),
         )
-        self.second_active = (
-            self.create_borrowing(
-                user=self.second_user,
-                book=self.create_book(
-                    "Second Active Book"
-                ),
-            )
+        self.second_active = self.create_borrowing(
+            user=self.second_user,
+            book=self.create_book("Second Active Book"),
         )
-        self.second_returned = (
-            self.create_borrowing(
-                user=self.second_user,
-                book=self.create_book(
-                    "Second Returned Book"
-                ),
-                actual_return_date=(
-                    timezone.localdate()
-                ),
-            )
+        self.second_returned = self.create_borrowing(
+            user=self.second_user,
+            book=self.create_book("Second Returned Book"),
+            actual_return_date=(timezone.localdate()),
         )
 
         self.authenticate_user(self.admin)
@@ -327,9 +268,7 @@ class AdminBorrowingFilterTests(
     def test_admin_sees_all_borrowings_without_filters(
         self,
     ) -> None:
-        response = self.client.get(
-            BORROWING_LIST_URL
-        )
+        response = self.client.get(BORROWING_LIST_URL)
 
         self.assertEqual(
             response.status_code,
@@ -373,9 +312,7 @@ class AdminBorrowingFilterTests(
         response = self.client.get(
             BORROWING_LIST_URL,
             {
-                "user_id": (
-                    self.user_without_borrowings.id
-                ),
+                "user_id": (self.user_without_borrowings.id),
             },
         )
 

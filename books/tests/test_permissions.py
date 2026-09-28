@@ -10,7 +10,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from books.models import Book
 
-
 BOOK_LIST_URL = reverse("books:book-list")
 
 
@@ -36,9 +35,7 @@ class BookPermissionTestBase(APITestCase):
         return book_data
 
     def create_book(self, **changes: Any) -> Book:
-        return Book.objects.create(
-            **self.get_book_data(**changes)
-        )
+        return Book.objects.create(**self.get_book_data(**changes))
 
     @staticmethod
     def create_user(
@@ -56,15 +53,9 @@ class BookPermissionTestBase(APITestCase):
         self,
         user: AbstractBaseUser,
     ) -> None:
-        access_token = RefreshToken.for_user(
-            user
-        ).access_token
+        access_token = RefreshToken.for_user(user).access_token
 
-        self.client.credentials(
-            HTTP_AUTHORIZE=(
-                f"Bearer {access_token}"
-            )
-        )
+        self.client.credentials(HTTP_AUTHORIZE=(f"Bearer {access_token}"))
 
 
 class UnauthenticatedBookPermissionTests(
@@ -84,9 +75,7 @@ class UnauthenticatedBookPermissionTests(
         )
 
     def test_can_retrieve_book(self) -> None:
-        response = self.client.get(
-            get_book_detail_url(self.book.id)
-        )
+        response = self.client.get(get_book_detail_url(self.book.id))
 
         self.assertEqual(
             response.status_code,
@@ -156,9 +145,7 @@ class UnauthenticatedBookPermissionTests(
         )
 
     def test_cannot_delete_book(self) -> None:
-        response = self.client.delete(
-            get_book_detail_url(self.book.id)
-        )
+        response = self.client.delete(get_book_detail_url(self.book.id))
 
         self.assertEqual(
             response.status_code,
@@ -178,15 +165,9 @@ class UnauthenticatedBookPermissionTests(
             password="admin-password",
             is_staff=True,
         )
-        access_token = RefreshToken.for_user(
-            admin_user
-        ).access_token
+        access_token = RefreshToken.for_user(admin_user).access_token
 
-        self.client.credentials(
-            HTTP_AUTHORIZATION=(
-                f"Bearer {access_token}"
-            )
-        )
+        self.client.credentials(HTTP_AUTHORIZATION=(f"Bearer {access_token}"))
 
         response = self.client.post(
             BOOK_LIST_URL,
@@ -228,9 +209,7 @@ class AuthenticatedUserBookPermissionTests(
         )
 
     def test_can_retrieve_book(self) -> None:
-        response = self.client.get(
-            get_book_detail_url(self.book.id)
-        )
+        response = self.client.get(get_book_detail_url(self.book.id))
 
         self.assertEqual(
             response.status_code,
@@ -300,9 +279,7 @@ class AuthenticatedUserBookPermissionTests(
         )
 
     def test_cannot_delete_book(self) -> None:
-        response = self.client.delete(
-            get_book_detail_url(self.book.id)
-        )
+        response = self.client.delete(get_book_detail_url(self.book.id))
 
         self.assertEqual(
             response.status_code,
@@ -341,9 +318,7 @@ class AdminBookPermissionTests(
         )
 
     def test_can_retrieve_book(self) -> None:
-        response = self.client.get(
-            get_book_detail_url(self.book.id)
-        )
+        response = self.client.get(get_book_detail_url(self.book.id))
 
         self.assertEqual(
             response.status_code,
@@ -418,9 +393,7 @@ class AdminBookPermissionTests(
         )
 
     def test_can_delete_book(self) -> None:
-        response = self.client.delete(
-            get_book_detail_url(self.book.id)
-        )
+        response = self.client.delete(get_book_detail_url(self.book.id))
 
         self.assertEqual(
             response.status_code,

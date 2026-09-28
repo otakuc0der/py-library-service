@@ -7,7 +7,6 @@ from payments.views import (
     checkout_success,
 )
 
-
 router = DefaultRouter()
 router.register(
     "",

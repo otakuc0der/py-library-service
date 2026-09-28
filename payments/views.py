@@ -26,7 +26,6 @@ from payments.serializers import PaymentSerializer
 from payments.services import mark_payment_as_paid
 from payments.stripe_client import get_stripe_client
 
-
 payment_status_response = inline_serializer(
     name="CheckoutSuccessResponse",
     fields={
@@ -116,9 +115,7 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
         if self.request.user.is_staff:
             return queryset
 
-        return queryset.filter(
-            borrowing__user=self.request.user
-        )
+        return queryset.filter(borrowing__user=self.request.user)
 
     @extend_schema(
         tags=["Payments"],
@@ -176,7 +173,7 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
                 signature,
                 settings.STRIPE_WEBHOOK_SECRET,
             )
-        except (ValueError, stripe.error.SignatureVerificationError):
+        except ValueError, stripe.error.SignatureVerificationError:
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -218,8 +215,7 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
             location=OpenApiParameter.QUERY,
             required=False,
             description=(
-                "Checkout Session ID inserted into the "
-                "success URL by Stripe."
+                "Checkout Session ID inserted into the " "success URL by Stripe."
             ),
         ),
     ],
@@ -227,8 +223,7 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
         200: OpenApiResponse(
             response=payment_status_response,
             description=(
-                "The payment was found. Its status is "
-                "`paid` or `pending`."
+                "The payment was found. Its status is " "`paid` or `pending`."
             ),
         ),
         400: OpenApiResponse(
@@ -237,10 +232,7 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
         ),
         404: OpenApiResponse(
             response=payment_message_response,
-            description=(
-                "No payment was found for this Checkout "
-                "Session."
-            ),
+            description=("No payment was found for this Checkout " "Session."),
         ),
     },
     auth=[],
@@ -262,29 +254,27 @@ def checkout_success(request: Request) -> Response:
 
     if payment is None:
         return Response(
-            {
-                "message": (
-                    "We could not find a payment for this session."
-                )
-            },
+            {"message": ("We could not find a payment for this session.")},
             status=status.HTTP_404_NOT_FOUND,
         )
 
     if payment.status == Payment.Status.PAID:
-        return Response({
+        return Response(
+            {
+                "status": payment.status,
+                "message": ("Thank you. Your payment has been received."),
+            }
+        )
+
+    return Response(
+        {
             "status": payment.status,
             "message": (
-                "Thank you. Your payment has been received."
+                "Your payment has not been confirmed yet. "
+                "Please check its status later."
             ),
-        })
-
-    return Response({
-        "status": payment.status,
-        "message": (
-            "Your payment has not been confirmed yet. "
-            "Please check its status later."
-        ),
-    })
+        }
+    )
 
 
 @extend_schema(
@@ -300,9 +290,7 @@ def checkout_success(request: Request) -> Response:
     responses={
         200: OpenApiResponse(
             response=payment_cancel_response,
-            description=(
-                "Checkout was left without completing payment."
-            ),
+            description=("Checkout was left without completing payment."),
         ),
     },
     auth=[],
@@ -310,10 +298,12 @@ def checkout_success(request: Request) -> Response:
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def checkout_cancel(request: Request) -> Response:
-    return Response({
-        "status": "cancelled",
-        "message": (
-            "Payment was not completed. You can try again later "
-            "if the checkout session is still available."
-        ),
-    })
+    return Response(
+        {
+            "status": "cancelled",
+            "message": (
+                "Payment was not completed. You can try again later "
+                "if the checkout session is still available."
+            ),
+        }
+    )

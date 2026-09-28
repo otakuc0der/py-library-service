@@ -38,9 +38,7 @@ class PaymentCalculationServiceTests(SimpleTestCase):
 
         self.assertEqual(amount, 1250)
 
-    @patch(
-        "payments.services.create_checkout_payment"
-    )
+    @patch("payments.services.create_checkout_payment")
     def test_create_payment_for_borrowing_calculates_rental_amount(
         self,
         mocked_create_checkout: MagicMock,
@@ -60,9 +58,7 @@ class PaymentCalculationServiceTests(SimpleTestCase):
         request = MagicMock(spec=HttpRequest)
         expected_payment = MagicMock(spec=Payment)
 
-        mocked_create_checkout.return_value = (
-            expected_payment
-        )
+        mocked_create_checkout.return_value = expected_payment
 
         result = create_payment_for_borrowing(
             borrowing=borrowing,
@@ -75,15 +71,10 @@ class PaymentCalculationServiceTests(SimpleTestCase):
             request=request,
             money_to_pay=Decimal("12.50"),
             payment_type=Payment.Type.PAYMENT,
-            product_name=(
-                "Pay for borrowing "
-                "the 'Test Book' book."
-            ),
+            product_name=("Pay for borrowing " "the 'Test Book' book."),
         )
 
-    @patch(
-        "payments.services.create_checkout_payment"
-    )
+    @patch("payments.services.create_checkout_payment")
     def test_create_payment_for_borrowing_rejects_non_positive_rental_period(
         self,
         mocked_create_checkout: MagicMock,
@@ -96,28 +87,17 @@ class PaymentCalculationServiceTests(SimpleTestCase):
             date(2026, 9, 9),
         ]
 
-        for expected_return_date in (
-            invalid_expected_dates
-        ):
+        for expected_return_date in invalid_expected_dates:
             with self.subTest(
-                expected_return_date=(
-                    expected_return_date
-                ),
+                expected_return_date=(expected_return_date),
             ):
-                borrowing = MagicMock(
-                    spec=Borrowing
-                )
+                borrowing = MagicMock(spec=Borrowing)
                 borrowing.borrow_date = borrow_date
-                borrowing.expected_return_date = (
-                    expected_return_date
-                )
+                borrowing.expected_return_date = expected_return_date
 
                 with self.assertRaisesMessage(
                     ValueError,
-                    (
-                        "Expected return date must be "
-                        "after borrowing date."
-                    ),
+                    ("Expected return date must be " "after borrowing date."),
                 ):
                     create_payment_for_borrowing(
                         borrowing=borrowing,
@@ -143,20 +123,13 @@ class PaymentCalculationServiceTests(SimpleTestCase):
             ):
                 with self.assertRaisesMessage(
                     ValueError,
-                    (
-                        "Payment amount must be "
-                        "greater than zero."
-                    ),
+                    ("Payment amount must be " "greater than zero."),
                 ):
                     create_checkout_payment(
                         borrowing=borrowing,
                         request=request,
-                        payment_type=(
-                            Payment.Type.PAYMENT
-                        ),
-                        product_name=(
-                            "Pay for 'Test' book"
-                        ),
+                        payment_type=(Payment.Type.PAYMENT),
+                        product_name=("Pay for 'Test' book"),
                         money_to_pay=amount,
                     )
 
@@ -165,11 +138,9 @@ class PaymentCalculationServiceTests(SimpleTestCase):
 
 class CheckoutPaymentCreationTests(TestCase):
     def setUp(self) -> None:
-        self.user = (
-            get_user_model().objects.create_user(
-                email="checkout@example.com",
-                password="test-password",
-            )
+        self.user = get_user_model().objects.create_user(
+            email="checkout@example.com",
+            password="test-password",
         )
 
         self.book = Book.objects.create(
@@ -209,18 +180,10 @@ class CheckoutPaymentCreationTests(TestCase):
     ) -> None:
         mocked_session = MagicMock()
         mocked_session.id = "cs_test_created"
-        mocked_session.url = (
-            "https://checkout.stripe.com/"
-            "cs_test_created"
-        )
+        mocked_session.url = "https://checkout.stripe.com/" "cs_test_created"
 
         stripe_create = (
-            mocked_get_stripe_client
-            .return_value
-            .v1
-            .checkout
-            .sessions
-            .create
+            mocked_get_stripe_client.return_value.v1.checkout.sessions.create
         )
         stripe_create.return_value = mocked_session
 
@@ -229,9 +192,7 @@ class CheckoutPaymentCreationTests(TestCase):
             request=self.request,
             money_to_pay=Decimal("15.00"),
             payment_type=Payment.Type.FINE,
-            product_name=(
-                "Overdue fine for Test Book"
-            ),
+            product_name=("Overdue fine for Test Book"),
         )
 
         payment.refresh_from_db()
@@ -262,18 +223,13 @@ class CheckoutPaymentCreationTests(TestCase):
         )
         self.assertEqual(
             payment.session_url,
-            (
-                "https://checkout.stripe.com/"
-                "cs_test_created"
-            ),
+            ("https://checkout.stripe.com/" "cs_test_created"),
         )
 
         mocked_get_stripe_client.assert_called_once_with()
         stripe_create.assert_called_once()
 
-        stripe_params = (
-            stripe_create.call_args.kwargs["params"]
-        )
+        stripe_params = stripe_create.call_args.kwargs["params"]
 
         self.assertEqual(
             stripe_params["mode"],
@@ -284,27 +240,19 @@ class CheckoutPaymentCreationTests(TestCase):
             str(payment.id),
         )
         self.assertEqual(
-            stripe_params["line_items"][0][
-                "price_data"
-            ]["currency"],
+            stripe_params["line_items"][0]["price_data"]["currency"],
             "usd",
         )
         self.assertEqual(
-            stripe_params["line_items"][0][
-                "price_data"
-            ]["unit_amount"],
+            stripe_params["line_items"][0]["price_data"]["unit_amount"],
             1500,
         )
         self.assertEqual(
-            stripe_params["line_items"][0][
-                "price_data"
-            ]["product_data"]["name"],
+            stripe_params["line_items"][0]["price_data"]["product_data"]["name"],
             "Overdue fine for Test Book",
         )
         self.assertEqual(
-            stripe_params["line_items"][0][
-                "quantity"
-            ],
+            stripe_params["line_items"][0]["quantity"],
             1,
         )
         self.assertIn(
@@ -322,16 +270,9 @@ class CheckoutPaymentCreationTests(TestCase):
         mocked_get_stripe_client: MagicMock,
     ) -> None:
         stripe_create = (
-            mocked_get_stripe_client
-            .return_value
-            .v1
-            .checkout
-            .sessions
-            .create
+            mocked_get_stripe_client.return_value.v1.checkout.sessions.create
         )
-        stripe_create.side_effect = RuntimeError(
-            "Stripe is unavailable"
-        )
+        stripe_create.side_effect = RuntimeError("Stripe is unavailable")
 
         with self.assertRaisesMessage(
             RuntimeError,
@@ -342,23 +283,17 @@ class CheckoutPaymentCreationTests(TestCase):
                 request=self.request,
                 money_to_pay=Decimal("15.00"),
                 payment_type=Payment.Type.FINE,
-                product_name=(
-                    "Overdue fine for Test Book"
-                ),
+                product_name=("Overdue fine for Test Book"),
             )
 
-        self.assertFalse(
-            Payment.objects.exists()
-        )
+        self.assertFalse(Payment.objects.exists())
 
 
 class PaymentCompletionServiceTests(TestCase):
     def setUp(self) -> None:
-        self.user = (
-            get_user_model().objects.create_user(
-                email="payment@example.com",
-                password="test-password",
-            )
+        self.user = get_user_model().objects.create_user(
+            email="payment@example.com",
+            password="test-password",
         )
 
         self.book = Book.objects.create(
@@ -385,10 +320,7 @@ class PaymentCompletionServiceTests(TestCase):
             borrowing=self.borrowing,
             status=Payment.Status.PENDING,
             type=Payment.Type.PAYMENT,
-            session_url=(
-                "https://checkout.stripe.com/"
-                "cs_test_payment"
-            ),
+            session_url=("https://checkout.stripe.com/" "cs_test_payment"),
             session_id="cs_test_payment",
             money_to_pay=Decimal("20.00"),
         )
@@ -396,9 +328,7 @@ class PaymentCompletionServiceTests(TestCase):
     def create_valid_session(self) -> MagicMock:
         session = MagicMock()
         session.id = self.payment.session_id
-        session.client_reference_id = str(
-            self.payment.id
-        )
+        session.client_reference_id = str(self.payment.id)
         session.payment_status = "paid"
         session.amount_total = 2000
         session.currency = "usd"
@@ -406,19 +336,14 @@ class PaymentCompletionServiceTests(TestCase):
         return session
 
     @override_settings(CENTS_PER_DOLLAR=100)
-    @patch(
-        "payments.services."
-        "send_payment_completed_notification.delay"
-    )
+    @patch("payments.services." "send_payment_completed_notification.delay")
     def test_mark_payment_as_paid_updates_status_and_queues_notification(
         self,
         mocked_delay: MagicMock,
     ) -> None:
         session = self.create_valid_session()
 
-        with self.captureOnCommitCallbacks(
-            execute=True
-        ) as callbacks:
+        with self.captureOnCommitCallbacks(execute=True) as callbacks:
             mark_payment_as_paid(session)
 
         self.payment.refresh_from_db()
@@ -428,29 +353,20 @@ class PaymentCompletionServiceTests(TestCase):
             Payment.Status.PAID,
         )
         self.assertEqual(len(callbacks), 1)
-        mocked_delay.assert_called_once_with(
-            self.payment.id
-        )
+        mocked_delay.assert_called_once_with(self.payment.id)
 
     @override_settings(CENTS_PER_DOLLAR=100)
-    @patch(
-        "payments.services."
-        "send_payment_completed_notification.delay"
-    )
+    @patch("payments.services." "send_payment_completed_notification.delay")
     def test_mark_payment_as_paid_is_idempotent_for_paid_payment(
         self,
         mocked_delay: MagicMock,
     ) -> None:
         self.payment.status = Payment.Status.PAID
-        self.payment.save(
-            update_fields=["status"]
-        )
+        self.payment.save(update_fields=["status"])
 
         session = self.create_valid_session()
 
-        with self.captureOnCommitCallbacks(
-            execute=True
-        ) as callbacks:
+        with self.captureOnCommitCallbacks(execute=True) as callbacks:
             mark_payment_as_paid(session)
 
         self.payment.refresh_from_db()
@@ -463,10 +379,7 @@ class PaymentCompletionServiceTests(TestCase):
         mocked_delay.assert_not_called()
 
     @override_settings(CENTS_PER_DOLLAR=100)
-    @patch(
-        "payments.services."
-        "send_payment_completed_notification.delay"
-    )
+    @patch("payments.services." "send_payment_completed_notification.delay")
     def test_mark_payment_as_paid_rejects_mismatched_session(
         self,
         mocked_delay: MagicMock,
@@ -504,10 +417,7 @@ class PaymentCompletionServiceTests(TestCase):
 
                 with self.assertRaisesMessage(
                     PaymentSessionMismatchError,
-                    (
-                        "Stripe Session does not "
-                        "match the payment."
-                    ),
+                    ("Stripe Session does not " "match the payment."),
                 ):
                     mark_payment_as_paid(session)
 

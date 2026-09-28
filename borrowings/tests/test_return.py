@@ -57,33 +57,22 @@ class BorrowingReturnTestBase(APITestCase):
     ) -> Borrowing:
         borrowing_data = {
             "borrow_date": timezone.localdate(),
-            "expected_return_date": (
-                    timezone.localdate()
-                    + timedelta(days=7)
-            ),
+            "expected_return_date": (timezone.localdate() + timedelta(days=7)),
             "actual_return_date": None,
             "user": user,
             "book": book,
         }
         borrowing_data.update(changes)
 
-        return Borrowing.objects.create(
-            **borrowing_data
-        )
+        return Borrowing.objects.create(**borrowing_data)
 
     def authenticate_user(
         self,
         user: AbstractBaseUser,
     ) -> None:
-        access_token = RefreshToken.for_user(
-            user
-        ).access_token
+        access_token = RefreshToken.for_user(user).access_token
 
-        self.client.credentials(
-            HTTP_AUTHORIZE=(
-                f"Bearer {access_token}"
-            )
-        )
+        self.client.credentials(HTTP_AUTHORIZE=(f"Bearer {access_token}"))
 
 
 class UnauthenticatedBorrowingReturnTests(BorrowingReturnTestBase):
@@ -97,15 +86,11 @@ class UnauthenticatedBorrowingReturnTests(BorrowingReturnTestBase):
             book=self.book,
         )
 
-    def test_unauthenticated_user_cannot_return_borrowing(
-        self
-    ) -> None:
+    def test_unauthenticated_user_cannot_return_borrowing(self) -> None:
         original_inventory = self.book.inventory
 
         response = self.client.post(
-            get_borrowing_return_url(
-                self.borrowing.id
-            ),
+            get_borrowing_return_url(self.borrowing.id),
             data={},
             format="json",
         )
@@ -118,9 +103,7 @@ class UnauthenticatedBorrowingReturnTests(BorrowingReturnTestBase):
         self.borrowing.refresh_from_db()
         self.book.refresh_from_db()
 
-        self.assertIsNone(
-            self.borrowing.actual_return_date
-        )
+        self.assertIsNone(self.borrowing.actual_return_date)
         self.assertEqual(
             self.book.inventory,
             original_inventory,
@@ -147,20 +130,16 @@ class AuthenticatedBorrowingReturnTests(BorrowingReturnTestBase):
             user=self.user,
             book=self.book,
         )
-        self.other_borrowing = (
-            self.create_borrowing(
-                user=self.other_user,
-                book=self.other_book,
-            )
+        self.other_borrowing = self.create_borrowing(
+            user=self.other_user,
+            book=self.other_book,
         )
 
         self.authenticate_user(self.user)
 
     def test_user_can_return_own_borrowing(self) -> None:
         response = self.client.post(
-            get_borrowing_return_url(
-                self.borrowing.id
-            ),
+            get_borrowing_return_url(self.borrowing.id),
             data={},
             format="json",
         )
@@ -172,9 +151,7 @@ class AuthenticatedBorrowingReturnTests(BorrowingReturnTestBase):
 
     def test_return_sets_actual_return_date(self) -> None:
         self.client.post(
-            get_borrowing_return_url(
-                self.borrowing.id
-            ),
+            get_borrowing_return_url(self.borrowing.id),
             data={},
             format="json",
         )
@@ -190,9 +167,7 @@ class AuthenticatedBorrowingReturnTests(BorrowingReturnTestBase):
         original_inventory = self.book.inventory
 
         self.client.post(
-            get_borrowing_return_url(
-                self.borrowing.id
-            ),
+            get_borrowing_return_url(self.borrowing.id),
             data={},
             format="json",
         )
@@ -204,13 +179,9 @@ class AuthenticatedBorrowingReturnTests(BorrowingReturnTestBase):
             original_inventory + 1,
         )
 
-    def test_return_response_contains_return_date(
-        self
-    ) -> None:
+    def test_return_response_contains_return_date(self) -> None:
         response = self.client.post(
-            get_borrowing_return_url(
-                self.borrowing.id
-            ),
+            get_borrowing_return_url(self.borrowing.id),
             data={},
             format="json",
         )
@@ -220,15 +191,11 @@ class AuthenticatedBorrowingReturnTests(BorrowingReturnTestBase):
             timezone.localdate().isoformat(),
         )
 
-    def test_return_response_contains_updated_inventory(
-        self
-    ) -> None:
+    def test_return_response_contains_updated_inventory(self) -> None:
         original_inventory = self.book.inventory
 
         response = self.client.post(
-            get_borrowing_return_url(
-                self.borrowing.id
-            ),
+            get_borrowing_return_url(self.borrowing.id),
             data={},
             format="json",
         )
@@ -238,13 +205,9 @@ class AuthenticatedBorrowingReturnTests(BorrowingReturnTestBase):
             original_inventory + 1,
         )
 
-    def test_return_response_uses_detail_representation(
-        self
-    ) -> None:
+    def test_return_response_uses_detail_representation(self) -> None:
         response = self.client.post(
-            get_borrowing_return_url(
-                self.borrowing.id
-            ),
+            get_borrowing_return_url(self.borrowing.id),
             data={},
             format="json",
         )
@@ -268,14 +231,8 @@ class AuthenticatedBorrowingReturnTests(BorrowingReturnTestBase):
             },
         )
 
-    def test_return_does_not_require_request_body(
-        self
-    ) -> None:
-        response = self.client.post(
-            get_borrowing_return_url(
-                self.borrowing.id
-            )
-        )
+    def test_return_does_not_require_request_body(self) -> None:
+        response = self.client.post(get_borrowing_return_url(self.borrowing.id))
 
         self.assertEqual(
             response.status_code,
@@ -283,9 +240,7 @@ class AuthenticatedBorrowingReturnTests(BorrowingReturnTestBase):
         )
 
     def test_borrowing_cannot_be_returned_twice(self) -> None:
-        return_url = get_borrowing_return_url(
-            self.borrowing.id
-        )
+        return_url = get_borrowing_return_url(self.borrowing.id)
 
         first_response = self.client.post(
             return_url,
@@ -315,13 +270,9 @@ class AuthenticatedBorrowingReturnTests(BorrowingReturnTestBase):
             "This borrowing has already been returned.",
         )
 
-    def test_repeated_return_does_not_increase_inventory_twice(
-        self
-    ) -> None:
+    def test_repeated_return_does_not_increase_inventory_twice(self) -> None:
         original_inventory = self.book.inventory
-        return_url = get_borrowing_return_url(
-            self.borrowing.id
-        )
+        return_url = get_borrowing_return_url(self.borrowing.id)
 
         self.client.post(
             return_url,
@@ -341,17 +292,11 @@ class AuthenticatedBorrowingReturnTests(BorrowingReturnTestBase):
             original_inventory + 1,
         )
 
-    def test_user_cannot_return_other_user_borrowing(
-        self
-    ) -> None:
-        original_inventory = (
-            self.other_book.inventory
-        )
+    def test_user_cannot_return_other_user_borrowing(self) -> None:
+        original_inventory = self.other_book.inventory
 
         response = self.client.post(
-            get_borrowing_return_url(
-                self.other_borrowing.id
-            ),
+            get_borrowing_return_url(self.other_borrowing.id),
             data={},
             format="json",
         )
@@ -364,17 +309,13 @@ class AuthenticatedBorrowingReturnTests(BorrowingReturnTestBase):
         self.other_borrowing.refresh_from_db()
         self.other_book.refresh_from_db()
 
-        self.assertIsNone(
-            self.other_borrowing.actual_return_date
-        )
+        self.assertIsNone(self.other_borrowing.actual_return_date)
         self.assertEqual(
             self.other_book.inventory,
             original_inventory,
         )
 
-    def test_missing_borrowing_returns_not_found(
-        self
-    ) -> None:
+    def test_missing_borrowing_returns_not_found(self) -> None:
         response = self.client.post(
             get_borrowing_return_url(999_999),
             data={},
@@ -387,34 +328,24 @@ class AuthenticatedBorrowingReturnTests(BorrowingReturnTestBase):
         )
 
     def test_get_method_is_not_allowed(self) -> None:
-        response = self.client.get(
-            get_borrowing_return_url(
-                self.borrowing.id
-            )
-        )
+        response = self.client.get(get_borrowing_return_url(self.borrowing.id))
 
         self.assertEqual(
             response.status_code,
             status.HTTP_405_METHOD_NOT_ALLOWED,
         )
 
-    def test_transaction_rolls_back_when_book_update_fails(
-        self
-    ) -> None:
+    def test_transaction_rolls_back_when_book_update_fails(self) -> None:
         original_inventory = self.book.inventory
 
         with patch.object(
             Book,
             "save",
-            side_effect=RuntimeError(
-                "Book update failed."
-            ),
+            side_effect=RuntimeError("Book update failed."),
         ):
             with self.assertRaises(RuntimeError):
                 self.client.post(
-                    get_borrowing_return_url(
-                        self.borrowing.id
-                    ),
+                    get_borrowing_return_url(self.borrowing.id),
                     data={},
                     format="json",
                 )
@@ -422,9 +353,7 @@ class AuthenticatedBorrowingReturnTests(BorrowingReturnTestBase):
         self.borrowing.refresh_from_db()
         self.book.refresh_from_db()
 
-        self.assertIsNone(
-            self.borrowing.actual_return_date
-        )
+        self.assertIsNone(self.borrowing.actual_return_date)
         self.assertEqual(
             self.book.inventory,
             original_inventory,
@@ -452,9 +381,7 @@ class AdminBorrowingReturnTests(BorrowingReturnTestBase):
         original_inventory = self.book.inventory
 
         response = self.client.post(
-            get_borrowing_return_url(
-                self.borrowing.id
-            ),
+            get_borrowing_return_url(self.borrowing.id),
             data={},
             format="json",
         )
@@ -476,12 +403,8 @@ class AdminBorrowingReturnTests(BorrowingReturnTestBase):
             original_inventory + 1,
         )
 
-    def test_admin_cannot_return_borrowing_twice(
-        self
-    ) -> None:
-        return_url = get_borrowing_return_url(
-            self.borrowing.id
-        )
+    def test_admin_cannot_return_borrowing_twice(self) -> None:
+        return_url = get_borrowing_return_url(self.borrowing.id)
 
         self.client.post(
             return_url,
@@ -499,9 +422,7 @@ class AdminBorrowingReturnTests(BorrowingReturnTestBase):
             status.HTTP_400_BAD_REQUEST,
         )
 
-    def test_admin_missing_borrowing_returns_not_found(
-        self
-    ) -> None:
+    def test_admin_missing_borrowing_returns_not_found(self) -> None:
         response = self.client.post(
             get_borrowing_return_url(999_999),
             data={},

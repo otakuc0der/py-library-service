@@ -103,8 +103,7 @@ from payments.services import create_checkout_payment
             201: BorrowingDetailSerializer,
             400: OpenApiResponse(
                 description=(
-                    "Invalid borrowing data or the selected "
-                    "book is unavailable."
+                    "Invalid borrowing data or the selected " "book is unavailable."
                 ),
             ),
             401: OpenApiResponse(
@@ -173,18 +172,12 @@ class BorrowingViewSet(
         )
 
         transaction.on_commit(
-            lambda: (
-                send_new_borrowing_notification.delay(
-                    borrowing.id
-                )
-            )
+            lambda: (send_new_borrowing_notification.delay(borrowing.id))
         )
 
-        response_serializer = (
-            BorrowingDetailSerializer(
-                borrowing,
-                context=self.get_serializer_context(),
-            )
+        response_serializer = BorrowingDetailSerializer(
+            borrowing,
+            context=self.get_serializer_context(),
         )
 
         return Response(
@@ -217,9 +210,7 @@ class BorrowingViewSet(
         responses={
             200: BorrowingDetailSerializer,
             400: OpenApiResponse(
-                description=(
-                    "The borrowing has already been returned."
-                ),
+                description=("The borrowing has already been returned."),
             ),
             401: OpenApiResponse(
                 description=(
@@ -248,9 +239,7 @@ class BorrowingViewSet(
     ) -> Response:
         with transaction.atomic():
             borrowing_queryset = (
-                self.get_queryset()
-                .select_related(None)
-                .select_for_update()
+                self.get_queryset().select_related(None).select_for_update()
             )
 
             borrowing = get_object_or_404(
@@ -262,20 +251,14 @@ class BorrowingViewSet(
                 raise ValidationError(
                     {
                         "actual_return_date": (
-                            "This borrowing has already "
-                            "been returned."
+                            "This borrowing has already " "been returned."
                         ),
                     },
                 )
 
-            locked_book = (
-                Book.objects.select_for_update()
-                .get(pk=borrowing.book_id)
-            )
+            locked_book = Book.objects.select_for_update().get(pk=borrowing.book_id)
 
-            borrowing.actual_return_date = (
-                timezone.localdate()
-            )
+            borrowing.actual_return_date = timezone.localdate()
             borrowing.save(
                 update_fields=[
                     "actual_return_date",
@@ -292,15 +275,12 @@ class BorrowingViewSet(
             borrowing.book = locked_book
 
             overdue_days = (
-                borrowing.actual_return_date
-                - borrowing.expected_return_date
+                borrowing.actual_return_date - borrowing.expected_return_date
             ).days
 
             if overdue_days > 0:
                 fine_amount = (
-                    overdue_days
-                    * locked_book.daily_fee
-                    * settings.FINE_MULTIPLIER
+                    overdue_days * locked_book.daily_fee * settings.FINE_MULTIPLIER
                 )
 
                 create_checkout_payment(
@@ -309,8 +289,7 @@ class BorrowingViewSet(
                     money_to_pay=fine_amount,
                     payment_type=Payment.Type.FINE,
                     product_name=(
-                        "Pay an overdue fine for "
-                        f"the '{locked_book.title}' book."
+                        "Pay an overdue fine for " f"the '{locked_book.title}' book."
                     ),
                 )
 

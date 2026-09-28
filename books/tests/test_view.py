@@ -9,7 +9,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from books.models import Book
 from books.serializers import BookSerializer
 
-
 BOOK_LIST_URL = reverse("books:book-list")
 
 
@@ -22,22 +21,14 @@ def get_book_detail_url(book_id: int) -> str:
 
 class BookViewSetTests(APITestCase):
     def setUp(self) -> None:
-        self.admin_user = (
-            get_user_model().objects.create_user(
-                email="admin@example.com",
-                password="admin-password",
-                is_staff=True,
-            )
+        self.admin_user = get_user_model().objects.create_user(
+            email="admin@example.com",
+            password="admin-password",
+            is_staff=True,
         )
-        access_token = RefreshToken.for_user(
-            self.admin_user
-        ).access_token
+        access_token = RefreshToken.for_user(self.admin_user).access_token
 
-        self.client.credentials(
-            HTTP_AUTHORIZE=(
-                f"Bearer {access_token}"
-            )
-        )
+        self.client.credentials(HTTP_AUTHORIZE=(f"Bearer {access_token}"))
 
     @staticmethod
     def get_book_data(**changes) -> dict:
@@ -53,9 +44,7 @@ class BookViewSetTests(APITestCase):
         return book_data
 
     def create_book(self, **changes) -> Book:
-        return Book.objects.create(
-            **self.get_book_data(**changes)
-        )
+        return Book.objects.create(**self.get_book_data(**changes))
 
     def test_get_empty_book_list(self) -> None:
         response = self.client.get(BOOK_LIST_URL)
@@ -97,9 +86,7 @@ class BookViewSetTests(APITestCase):
         book = self.create_book()
         serializer = BookSerializer(book)
 
-        response = self.client.get(
-            get_book_detail_url(book.id)
-        )
+        response = self.client.get(get_book_detail_url(book.id))
 
         self.assertEqual(
             response.status_code,
@@ -117,9 +104,7 @@ class BookViewSetTests(APITestCase):
         book_id = book.id
         book.delete()
 
-        response = self.client.get(
-            get_book_detail_url(book_id)
-        )
+        response = self.client.get(get_book_detail_url(book_id))
 
         self.assertEqual(
             response.status_code,
@@ -391,9 +376,7 @@ class BookViewSetTests(APITestCase):
     def test_delete_book(self) -> None:
         book = self.create_book()
 
-        response = self.client.delete(
-            get_book_detail_url(book.id)
-        )
+        response = self.client.delete(get_book_detail_url(book.id))
 
         self.assertEqual(
             response.status_code,
@@ -412,9 +395,7 @@ class BookViewSetTests(APITestCase):
         book_id = book.id
         book.delete()
 
-        response = self.client.delete(
-            get_book_detail_url(book_id)
-        )
+        response = self.client.delete(get_book_detail_url(book_id))
 
         self.assertEqual(
             response.status_code,

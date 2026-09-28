@@ -36,8 +36,7 @@ class MyTokenObtainPairView(TokenObtainPairView):
         tags=["Authentication"],
         summary="Refresh JWT access token",
         description=(
-            "Accept a valid refresh token and return a new "
-            "JWT access token."
+            "Accept a valid refresh token and return a new " "JWT access token."
         ),
     ),
 )
@@ -71,9 +70,7 @@ class CreateUserView(generics.CreateAPIView):
     get=extend_schema(
         tags=["Users"],
         summary="Retrieve current user",
-        description=(
-            "Return the profile of the authenticated user."
-        ),
+        description=("Return the profile of the authenticated user."),
         responses={
             200: UserSerializer,
             401: OpenApiResponse(

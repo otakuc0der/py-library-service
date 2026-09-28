@@ -16,35 +16,23 @@ from payments.models import Payment
 
 @shared_task
 def send_new_borrowing_notification(borrowing_id: int) -> None:
-    borrowing = (
-        Borrowing.objects
-        .select_related(
-            "book",
-            "user",
-        )
-        .get(id=borrowing_id)
-    )
+    borrowing = Borrowing.objects.select_related(
+        "book",
+        "user",
+    ).get(id=borrowing_id)
 
-    message = format_new_borrowing_message(
-        borrowing
-    )
+    message = format_new_borrowing_message(borrowing)
 
-    async_to_sync(
-        send_telegram_message
-    )(message)
+    async_to_sync(send_telegram_message)(message)
 
 
 @shared_task
 def send_payment_completed_notification(payment_id: int) -> None:
-    payment = (
-        Payment.objects
-        .select_related(
-            "borrowing",
-            "borrowing__book",
-            "borrowing__user",
-        )
-        .get(id=payment_id)
-    )
+    payment = Payment.objects.select_related(
+        "borrowing",
+        "borrowing__book",
+        "borrowing__user",
+    ).get(id=payment_id)
 
     message = format_payment_notification_message(payment)
 
@@ -53,10 +41,6 @@ def send_payment_completed_notification(payment_id: int) -> None:
 
 @shared_task
 def check_overdue_borrowings() -> None:
-    overdue_borrowings = list(
-        get_overdue_borrowings()
-    )
+    overdue_borrowings = list(get_overdue_borrowings())
 
-    async_to_sync(
-        send_overdue_borrowings_report
-    )(overdue_borrowings)
+    async_to_sync(send_overdue_borrowings_report)(overdue_borrowings)

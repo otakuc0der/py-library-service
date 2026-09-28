@@ -14,8 +14,7 @@ def get_borrowing_date_errors(
         and expected_return_date < borrow_date
     ):
         errors["expected_return_date"] = (
-            "Expected return date cannot be earlier "
-            "than borrow date."
+            "Expected return date cannot be earlier " "than borrow date."
         )
 
     if (
@@ -24,16 +23,11 @@ def get_borrowing_date_errors(
         and actual_return_date < borrow_date
     ):
         errors["actual_return_date"] = (
-            "Actual return date cannot be earlier "
-            "than borrow date."
+            "Actual return date cannot be earlier " "than borrow date."
         )
 
     return errors
 
 
 def validate_book_inventory(inventory: int) -> str | None:
-    return (
-        "This book is currently unavailable."
-        if inventory <= 0
-        else None
-    )
+    return "This book is currently unavailable." if inventory <= 0 else None

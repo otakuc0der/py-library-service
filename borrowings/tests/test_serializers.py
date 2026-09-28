@@ -19,17 +19,13 @@ from borrowings.serializers import (
 
 class BorrowingSerializerTestBase(TestCase):
     def setUp(self) -> None:
-        self.user = (
-            get_user_model().objects.create_user(
-                email="user@example.com",
-                password="test-password",
-            )
+        self.user = get_user_model().objects.create_user(
+            email="user@example.com",
+            password="test-password",
         )
-        self.other_user = (
-            get_user_model().objects.create_user(
-                email="other@example.com",
-                password="test-password",
-            )
+        self.other_user = get_user_model().objects.create_user(
+            email="other@example.com",
+            password="test-password",
         )
         self.book = Book.objects.create(
             title="The Little Prince",
@@ -40,10 +36,7 @@ class BorrowingSerializerTestBase(TestCase):
         )
         self.borrowing = Borrowing.objects.create(
             borrow_date=timezone.localdate(),
-            expected_return_date=(
-                timezone.localdate()
-                + timedelta(days=7)
-            ),
+            expected_return_date=(timezone.localdate() + timedelta(days=7)),
             actual_return_date=None,
             book=self.book,
             user=self.user,
@@ -55,8 +48,7 @@ class BorrowingSerializerTestBase(TestCase):
     ) -> dict:
         data = {
             "expected_return_date": (
-                timezone.localdate()
-                + timedelta(days=7)
+                timezone.localdate() + timedelta(days=7)
             ).isoformat(),
             "book": self.book.id,
         }
@@ -65,15 +57,11 @@ class BorrowingSerializerTestBase(TestCase):
         return data
 
 
-class BorrowingListSerializerTests(
-    BorrowingSerializerTestBase
-):
+class BorrowingListSerializerTests(BorrowingSerializerTestBase):
     def test_serializer_returns_all_fields(
         self,
     ) -> None:
-        serializer = BorrowingListSerializer(
-            self.borrowing
-        )
+        serializer = BorrowingListSerializer(self.borrowing)
 
         self.assertEqual(
             set(serializer.data.keys()),
@@ -89,9 +77,7 @@ class BorrowingListSerializerTests(
         )
 
     def test_serializer_returns_brief_book(self) -> None:
-        serializer = BorrowingListSerializer(
-            self.borrowing
-        )
+        serializer = BorrowingListSerializer(self.borrowing)
 
         self.assertEqual(
             set(serializer.data["book"].keys()),
@@ -103,9 +89,7 @@ class BorrowingListSerializerTests(
         )
 
     def test_brief_book_contains_correct_data(self) -> None:
-        book_data = BorrowingListSerializer(
-            self.borrowing
-        ).data["book"]
+        book_data = BorrowingListSerializer(self.borrowing).data["book"]
 
         self.assertEqual(
             book_data["id"],
@@ -121,9 +105,7 @@ class BorrowingListSerializerTests(
         )
 
     def test_serializer_returns_brief_user(self) -> None:
-        user_data = BorrowingListSerializer(
-            self.borrowing
-        ).data["user"]
+        user_data = BorrowingListSerializer(self.borrowing).data["user"]
 
         self.assertEqual(
             set(user_data.keys()),
@@ -144,9 +126,7 @@ class BorrowingListSerializerTests(
     def test_serializer_returns_empty_payments_list(
         self,
     ) -> None:
-        serializer = BorrowingListSerializer(
-            self.borrowing
-        )
+        serializer = BorrowingListSerializer(self.borrowing)
 
         self.assertEqual(
             serializer.data["payments"],
@@ -158,14 +138,10 @@ class BorrowingListSerializerTests(
     ) -> None:
         serializer = BorrowingListSerializer(self.borrowing)
 
-        self.assertIsNone(
-            serializer.data["actual_return_date"]
-        )
+        self.assertIsNone(serializer.data["actual_return_date"])
 
     def test_all_fields_are_read_only(self) -> None:
-        original_expected_return_date = (
-            self.borrowing.expected_return_date
-        )
+        original_expected_return_date = self.borrowing.expected_return_date
 
         serializer = BorrowingListSerializer(
             instance=self.borrowing,
@@ -193,24 +169,18 @@ class BorrowingListSerializerTests(
             self.borrowing.expected_return_date,
             original_expected_return_date,
         )
-        self.assertIsNone(
-            self.borrowing.actual_return_date
-        )
+        self.assertIsNone(self.borrowing.actual_return_date)
         self.assertEqual(
             self.borrowing.user,
             self.user,
         )
 
 
-class BorrowingDetailSerializerTests(
-    BorrowingSerializerTestBase
-):
+class BorrowingDetailSerializerTests(BorrowingSerializerTestBase):
     def test_detail_serializer_returns_full_book(
         self,
     ) -> None:
-        serializer = BorrowingDetailSerializer(
-            self.borrowing
-        )
+        serializer = BorrowingDetailSerializer(self.borrowing)
 
         self.assertEqual(
             set(serializer.data["book"].keys()),
@@ -227,9 +197,7 @@ class BorrowingDetailSerializerTests(
     def test_detail_serializer_returns_correct_book_data(
         self,
     ) -> None:
-        book_data = BorrowingDetailSerializer(
-            self.borrowing
-        ).data["book"]
+        book_data = BorrowingDetailSerializer(self.borrowing).data["book"]
 
         self.assertEqual(
             book_data["id"],
@@ -251,9 +219,7 @@ class BorrowingDetailSerializerTests(
     def test_detail_serializer_returns_brief_user(
         self,
     ) -> None:
-        user_data = BorrowingDetailSerializer(
-            self.borrowing
-        ).data["user"]
+        user_data = BorrowingDetailSerializer(self.borrowing).data["user"]
 
         self.assertEqual(
             user_data,
@@ -277,24 +243,17 @@ class BorrowingCreateSerializerTests(
         )
 
         self.payment_service_patcher = patch(
-            "borrowings.serializers."
-            "create_payment_for_borrowing"
+            "borrowings.serializers." "create_payment_for_borrowing"
         )
-        self.mocked_create_payment: MagicMock = (
-            self.payment_service_patcher.start()
-        )
-        self.addCleanup(
-            self.payment_service_patcher.stop
-        )
+        self.mocked_create_payment: MagicMock = self.payment_service_patcher.start()
+        self.addCleanup(self.payment_service_patcher.stop)
 
     def get_create_serializer(
         self,
         **changes,
     ) -> BorrowingCreateSerializer:
         return BorrowingCreateSerializer(
-            data=self.get_create_data(
-                **changes
-            ),
+            data=self.get_create_data(**changes),
             context={
                 "request": self.request,
             },
@@ -312,9 +271,7 @@ class BorrowingCreateSerializerTests(
         self,
     ) -> None:
         serializer = self.get_create_serializer(
-            expected_return_date=(
-                timezone.localdate().isoformat()
-            ),
+            expected_return_date=(timezone.localdate().isoformat()),
         )
 
         self.assertTrue(
@@ -326,10 +283,7 @@ class BorrowingCreateSerializerTests(
         self,
     ) -> None:
         serializer = self.get_create_serializer(
-            expected_return_date=(
-                timezone.localdate()
-                - timedelta(days=1)
-            ).isoformat(),
+            expected_return_date=(timezone.localdate() - timedelta(days=1)).isoformat(),
         )
 
         self.assertFalse(serializer.is_valid())
@@ -419,19 +373,14 @@ class BorrowingCreateSerializerTests(
         )
         serializer.is_valid(raise_exception=True)
 
-        borrowing = serializer.save(
-            user=self.user
-        )
+        borrowing = serializer.save(user=self.user)
 
         self.assertEqual(
             borrowing.user,
             self.user,
         )
 
-    @patch(
-        "borrowings.serializers."
-        "validate_book_inventory"
-    )
+    @patch("borrowings.serializers." "validate_book_inventory")
     def test_inventory_is_checked_again_after_lock(
         self,
         mocked_validator: MagicMock,
@@ -446,9 +395,7 @@ class BorrowingCreateSerializerTests(
 
         initial_count = Borrowing.objects.count()
 
-        with self.assertRaises(
-            serializers.ValidationError
-        ):
+        with self.assertRaises(serializers.ValidationError):
             serializer.save(user=self.user)
 
         self.book.refresh_from_db()
@@ -474,9 +421,7 @@ class BorrowingCreateSerializerTests(
         with patch.object(
             Book,
             "save",
-            side_effect=RuntimeError(
-                "Inventory update failed."
-            ),
+            side_effect=RuntimeError("Inventory update failed."),
         ):
             with self.assertRaisesMessage(
                 RuntimeError,
@@ -505,10 +450,8 @@ class BorrowingCreateSerializerTests(
         initial_count = Borrowing.objects.count()
         original_inventory = self.book.inventory
 
-        self.mocked_create_payment.side_effect = (
-            RuntimeError(
-                "Payment creation failed."
-            )
+        self.mocked_create_payment.side_effect = RuntimeError(
+            "Payment creation failed."
         )
 
         with self.assertRaisesMessage(

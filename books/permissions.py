@@ -6,9 +6,7 @@ from rest_framework.request import Request
 
 
 class IsAdminOrReadOnly(BasePermission):
-    message = (
-        "Only administrators can modify the book inventory."
-    )
+    message = "Only administrators can modify the book inventory."
 
     def has_permission(
         self,
@@ -18,7 +16,4 @@ class IsAdminOrReadOnly(BasePermission):
         if request.method in SAFE_METHODS:
             return True
 
-        return bool(
-            request.user
-            and request.user.is_staff
-        )
+        return bool(request.user and request.user.is_staff)

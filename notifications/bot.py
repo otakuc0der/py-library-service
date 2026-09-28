@@ -32,11 +32,7 @@ def format_new_borrowing_message(borrowing: Borrowing) -> str:
 def format_overdue_report_started_message(borrowings_count: int) -> str:
     today = timezone.localdate()
 
-    borrowing_word = (
-        "borrowing"
-        if borrowings_count == 1
-        else "borrowings"
-    )
+    borrowing_word = "borrowing" if borrowings_count == 1 else "borrowings"
 
     return (
         "🚨 <b>Daily Overdue Borrowings "
@@ -51,26 +47,15 @@ def format_overdue_report_started_message(borrowings_count: int) -> str:
 
 def format_overdue_borrowing_message(borrowing: Borrowing) -> str:
     today = timezone.localdate()
-    overdue_days = (
-        today - borrowing.expected_return_date
-    ).days
+    overdue_days = (today - borrowing.expected_return_date).days
 
     if overdue_days == 0:
         title = "⚠️ <b>Borrowing Due Today</b>"
-        due_information = (
-            "⏳ <b>Due:</b> Today"
-        )
+        due_information = "⏳ <b>Due:</b> Today"
     else:
         title = "🚨 <b>Borrowing Overdue</b>"
-        day_word = (
-            "day"
-            if overdue_days == 1
-            else "days"
-        )
-        due_information = (
-            f"⏳ <b>Overdue by:</b> "
-            f"{overdue_days} {day_word}"
-        )
+        day_word = "day" if overdue_days == 1 else "days"
+        due_information = f"⏳ <b>Overdue by:</b> " f"{overdue_days} {day_word}"
 
     return (
         f"{title}\n\n"
@@ -95,11 +80,7 @@ def format_overdue_borrowing_message(borrowing: Borrowing) -> str:
 def format_overdue_report_completed_message(
     borrowings_count: int,
 ) -> str:
-    borrowing_word = (
-        "borrowing"
-        if borrowings_count == 1
-        else "borrowings"
-    )
+    borrowing_word = "borrowing" if borrowings_count == 1 else "borrowings"
 
     return (
         "📋 <b>Overdue Borrowings Report "
@@ -140,39 +121,19 @@ async def send_overdue_borrowings_report(
     borrowings: list[Borrowing],
 ) -> None:
     if not borrowings:
-        message = (
-            format_no_overdue_borrowings_message()
-        )
+        message = format_no_overdue_borrowings_message()
         await send_telegram_message(message)
         return
 
-    started_message = (
-        format_overdue_report_started_message(
-            len(borrowings)
-        )
-    )
-    await send_telegram_message(
-        started_message
-    )
+    started_message = format_overdue_report_started_message(len(borrowings))
+    await send_telegram_message(started_message)
 
     for borrowing in borrowings:
-        borrowing_message = (
-            format_overdue_borrowing_message(
-                borrowing
-            )
-        )
-        await send_telegram_message(
-            borrowing_message
-        )
+        borrowing_message = format_overdue_borrowing_message(borrowing)
+        await send_telegram_message(borrowing_message)
 
-    completed_message = (
-        format_overdue_report_completed_message(
-            len(borrowings)
-        )
-    )
-    await send_telegram_message(
-        completed_message
-    )
+    completed_message = format_overdue_report_completed_message(len(borrowings))
+    await send_telegram_message(completed_message)
 
 
 def format_payment_completed_message(payment: Payment) -> str:
@@ -200,10 +161,7 @@ def format_fine_payment_completed_message(payment: Payment) -> str:
     if borrowing.actual_return_date is None:
         raise ValueError("A fine payment requires a returned borrowing.")
 
-    overdue_days = (
-        borrowing.actual_return_date
-        - borrowing.expected_return_date
-    ).days
+    overdue_days = (borrowing.actual_return_date - borrowing.expected_return_date).days
 
     return (
         "🚨 <b>Overdue Fine Payment Received</b>\n\n"

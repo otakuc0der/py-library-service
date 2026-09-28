@@ -30,19 +30,13 @@ class PaymentModelTests(TestCase):
         cls.borrowing = Borrowing.objects.create(
             user=cls.user,
             book=cls.book,
-            expected_return_date=(
-                timezone.localdate()
-                + timedelta(days=7)
-            ),
+            expected_return_date=(timezone.localdate() + timedelta(days=7)),
         )
 
     def test_payment_uses_expected_defaults(self) -> None:
         payment = Payment.objects.create(
             borrowing=self.borrowing,
-            session_url=(
-                "https://checkout.stripe.com/"
-                "test-session"
-            ),
+            session_url=("https://checkout.stripe.com/" "test-session"),
             session_id="cs_test_defaults",
             money_to_pay=Decimal("12.50"),
         )
@@ -59,10 +53,7 @@ class PaymentModelTests(TestCase):
     def test_payment_is_connected_to_borrowing(self) -> None:
         payment = Payment.objects.create(
             borrowing=self.borrowing,
-            session_url=(
-                "https://checkout.stripe.com/"
-                "related-session"
-            ),
+            session_url=("https://checkout.stripe.com/" "related-session"),
             session_id="cs_test_relationship",
             money_to_pay=Decimal("15.00"),
         )
@@ -79,29 +70,20 @@ class PaymentModelTests(TestCase):
     def test_payment_string_representation(self) -> None:
         payment = Payment.objects.create(
             borrowing=self.borrowing,
-            session_url=(
-                "https://checkout.stripe.com/"
-                "string-session"
-            ),
+            session_url=("https://checkout.stripe.com/" "string-session"),
             session_id="cs_test_string",
             money_to_pay=Decimal("20.00"),
         )
 
         self.assertEqual(
             str(payment),
-            (
-                f"Payment payment #{payment.pk} "
-                "— Pending"
-            ),
+            (f"Payment payment #{payment.pk} " "— Pending"),
         )
 
     def test_money_to_pay_cannot_be_negative(self) -> None:
         payment = Payment(
             borrowing=self.borrowing,
-            session_url=(
-                "https://checkout.stripe.com/"
-                "invalid-session"
-            ),
+            session_url=("https://checkout.stripe.com/" "invalid-session"),
             session_id="cs_test_negative",
             money_to_pay=Decimal("-1.00"),
         )
@@ -112,20 +94,14 @@ class PaymentModelTests(TestCase):
     def test_session_id_must_be_unique(self) -> None:
         Payment.objects.create(
             borrowing=self.borrowing,
-            session_url=(
-                "https://checkout.stripe.com/"
-                "first-session"
-            ),
+            session_url=("https://checkout.stripe.com/" "first-session"),
             session_id="cs_test_unique",
             money_to_pay=Decimal("10.00"),
         )
 
         duplicate_payment = Payment(
             borrowing=self.borrowing,
-            session_url=(
-                "https://checkout.stripe.com/"
-                "second-session"
-            ),
+            session_url=("https://checkout.stripe.com/" "second-session"),
             session_id="cs_test_unique",
             money_to_pay=Decimal("15.00"),
         )

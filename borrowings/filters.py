@@ -8,10 +8,7 @@ class BorrowingFilter(filters.FilterSet):
     user_id = filters.NumberFilter(
         method="filter_by_user_id",
         label="User ID",
-        help_text=(
-            "Filter borrowings by user ID. "
-            "Available only to admins."
-        ),
+        help_text=("Filter borrowings by user ID. " "Available only to admins."),
     )
     is_active = filters.BooleanFilter(
         method="filter_by_is_active",
@@ -33,9 +30,7 @@ class BorrowingFilter(filters.FilterSet):
         value: int,
     ) -> QuerySet[Borrowing]:
         if self.request.user.is_staff:
-            return queryset.filter(
-                user_id=value
-            )
+            return queryset.filter(user_id=value)
 
         return queryset
 
@@ -48,6 +43,4 @@ class BorrowingFilter(filters.FilterSet):
         if value is None:
             return queryset
 
-        return queryset.filter(
-            actual_return_date__isnull=value
-        )
+        return queryset.filter(actual_return_date__isnull=value)
