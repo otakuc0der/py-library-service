@@ -56,9 +56,7 @@ def create_checkout_payment(
             ],
             "client_reference_id": str(payment.id),
             "mode": "payment",
-            "success_url": (
-                f"{success_url}?session_id={{CHECKOUT_SESSION_ID}}"
-            ),
+            "success_url": (f"{success_url}?session_id={{CHECKOUT_SESSION_ID}}"),
             "cancel_url": cancel_url,
         },
     )

@@ -264,6 +264,7 @@ class CheckoutPaymentCreationTests(TestCase):
             stripe_params["cancel_url"],
         )
 
+
 class PaymentCompletionServiceTests(TestCase):
     def setUp(self) -> None:
         self.user = get_user_model().objects.create_user(

@@ -94,9 +94,7 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
             )
 
             if inventory_error:
-                raise serializers.ValidationError(
-                    {"book": inventory_error}
-                )
+                raise serializers.ValidationError({"book": inventory_error})
 
             borrowing = Borrowing.objects.create(
                 book=locked_book,
