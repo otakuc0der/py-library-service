@@ -440,33 +440,3 @@ class BorrowingCreateSerializerTests(
             12,
         )
         self.mocked_create_payment.assert_not_called()
-
-    def test_transaction_is_rolled_back_when_payment_creation_fails(
-        self,
-    ) -> None:
-        serializer = self.get_create_serializer()
-        serializer.is_valid(raise_exception=True)
-
-        initial_count = Borrowing.objects.count()
-        original_inventory = self.book.inventory
-
-        self.mocked_create_payment.side_effect = RuntimeError(
-            "Payment creation failed."
-        )
-
-        with self.assertRaisesMessage(
-            RuntimeError,
-            "Payment creation failed.",
-        ):
-            serializer.save(user=self.user)
-
-        self.book.refresh_from_db()
-
-        self.assertEqual(
-            Borrowing.objects.count(),
-            initial_count,
-        )
-        self.assertEqual(
-            self.book.inventory,
-            original_inventory,
-        )

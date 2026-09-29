@@ -85,15 +85,17 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
         selected_book = validated_data.pop("book")
 
         with transaction.atomic():
-            locked_book = Book.objects.select_for_update().get(pk=selected_book.pk)
+            locked_book = Book.objects.select_for_update().get(
+                pk=selected_book.pk,
+            )
 
-            inventory_error = validate_book_inventory(inventory=locked_book.inventory)
+            inventory_error = validate_book_inventory(
+                inventory=locked_book.inventory,
+            )
 
             if inventory_error:
                 raise serializers.ValidationError(
-                    {
-                        "book": inventory_error,
-                    }
+                    {"book": inventory_error}
                 )
 
             borrowing = Borrowing.objects.create(
@@ -102,13 +104,11 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
             )
 
             locked_book.inventory -= 1
-            locked_book.save(
-                update_fields=["inventory"],
-            )
+            locked_book.save(update_fields=["inventory"])
 
-            create_payment_for_borrowing(
-                borrowing=borrowing,
-                request=self.context["request"],
-            )
+        create_payment_for_borrowing(
+            borrowing=borrowing,
+            request=self.context["request"],
+        )
 
-            return borrowing
+        return borrowing

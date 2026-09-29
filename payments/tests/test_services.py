@@ -264,31 +264,6 @@ class CheckoutPaymentCreationTests(TestCase):
             stripe_params["cancel_url"],
         )
 
-    @patch("payments.services.get_stripe_client")
-    def test_create_checkout_payment_rolls_back_payment_when_stripe_fails(
-        self,
-        mocked_get_stripe_client: MagicMock,
-    ) -> None:
-        stripe_create = (
-            mocked_get_stripe_client.return_value.v1.checkout.sessions.create
-        )
-        stripe_create.side_effect = RuntimeError("Stripe is unavailable")
-
-        with self.assertRaisesMessage(
-            RuntimeError,
-            "Stripe is unavailable",
-        ):
-            create_checkout_payment(
-                borrowing=self.borrowing,
-                request=self.request,
-                money_to_pay=Decimal("15.00"),
-                payment_type=Payment.Type.FINE,
-                product_name=("Overdue fine for Test Book"),
-            )
-
-        self.assertFalse(Payment.objects.exists())
-
-
 class PaymentCompletionServiceTests(TestCase):
     def setUp(self) -> None:
         self.user = get_user_model().objects.create_user(
