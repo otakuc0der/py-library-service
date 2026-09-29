@@ -14,7 +14,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 
 [![Tests and code quality](https://github.com/otakuc0der/py-library-service/actions/workflows/tests-and-code-quality.yml/badge.svg)](https://github.com/otakuc0der/py-library-service/actions/workflows/tests-and-code-quality.yml)
-![Tests](https://img.shields.io/badge/tests-220%20passed-brightgreen?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-218%20passed-brightgreen?style=flat-square)
 ![Code style](https://img.shields.io/badge/code%20style-black-000000?style=flat-square)
 ![Lint](https://img.shields.io/badge/lint-flake8-4B8BBE?style=flat-square)
 
