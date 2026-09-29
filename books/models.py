@@ -17,9 +17,7 @@ class Book(models.Model):
         choices=Cover.choices,
         default=Cover.HARD,
     )
-    inventory = models.PositiveIntegerField(
-        validators=[MinValueValidator(0)],
-    )
+    inventory = models.PositiveIntegerField()
     daily_fee = models.DecimalField(
         max_digits=8,
         decimal_places=2,
@@ -32,10 +30,6 @@ class Book(models.Model):
             models.CheckConstraint(
                 condition=Q(daily_fee__gte=0),
                 name="daily_fee_non_negative",
-            ),
-            models.CheckConstraint(
-                condition=Q(inventory__gte=0),
-                name="inventory_non_negative",
             ),
         ]
 
