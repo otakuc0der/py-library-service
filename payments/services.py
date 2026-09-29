@@ -34,46 +34,41 @@ def create_checkout_payment(
         reverse("payments:checkout-cancel"),
     )
 
-    with transaction.atomic():
-        payment = Payment.objects.create(
-            borrowing=borrowing,
-            type=payment_type,
-            money_to_pay=money_to_pay,
-        )
+    payment = Payment.objects.create(
+        borrowing=borrowing,
+        type=payment_type,
+        money_to_pay=money_to_pay,
+    )
 
-        session = get_stripe_client().v1.checkout.sessions.create(
-            params={
-                "line_items": [
-                    {
-                        "price_data": {
-                            "currency": "usd",
-                            "unit_amount": (get_amount_in_cents(payment)),
-                            "product_data": {
-                                "name": product_name,
-                            },
+    session = get_stripe_client().v1.checkout.sessions.create(
+        params={
+            "line_items": [
+                {
+                    "price_data": {
+                        "currency": "usd",
+                        "unit_amount": get_amount_in_cents(payment),
+                        "product_data": {
+                            "name": product_name,
                         },
-                        "quantity": 1,
                     },
-                ],
-                "client_reference_id": str(
-                    payment.id,
-                ),
-                "mode": "payment",
-                "success_url": (
-                    f"{success_url}" f"?session_id={{CHECKOUT_SESSION_ID}}"
-                ),
-                "cancel_url": cancel_url,
-            },
-        )
-
-        payment.session_id = session.id
-        payment.session_url = session.url
-        payment.save(
-            update_fields=[
-                "session_id",
-                "session_url",
+                    "quantity": 1,
+                },
             ],
-        )
+            "client_reference_id": str(payment.id),
+            "mode": "payment",
+            "success_url": (f"{success_url}?session_id={{CHECKOUT_SESSION_ID}}"),
+            "cancel_url": cancel_url,
+        },
+    )
+
+    payment.session_id = session.id
+    payment.session_url = session.url
+    payment.save(
+        update_fields=[
+            "session_id",
+            "session_url",
+        ],
+    )
 
     return payment
 
